@@ -66,7 +66,7 @@ public class Main {
         updatedSubtask1.setId(subtask1id);
         taskManager.update(updatedSubtask1);
         System.out.println("Updated subtask = " + taskManager.findSubTaskById(subtask1id));
-        System.out.println("Updated epic status = " + taskManager.findEpicById(epic1id).getStatus());
+        System.out.println("Updated epic 1 status = " + taskManager.findEpicById(epic1id).getStatus());
 
         Subtask updatedSubtask4 = new Subtask("upd subt4", "desc", Status.DONE, epic2id);
         updatedSubtask4.setId(subtask4id);
@@ -74,10 +74,10 @@ public class Main {
         updatedSubtask5.setId(subtask5id);
         taskManager.update(updatedSubtask4);
         taskManager.update(updatedSubtask5);
-        System.out.println("Updated epic status = " + taskManager.findEpicById(epic2id).getStatus());
+        System.out.println("Updated epic 2 status = " + taskManager.findEpicById(epic2id).getStatus());
 
         taskManager.deleteSubtaskById(subtask1id);
-        System.out.println("Updated epic status = " + taskManager.findEpicById(epic1id).getStatus());
+        System.out.println("Updated epic 1 status = " + taskManager.findEpicById(epic1id).getStatus());
 
         printAll(taskManager);
 

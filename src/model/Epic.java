@@ -45,25 +45,23 @@ public class Epic extends Task {
     private Status updateStatus() {
         boolean hasNew = false;
         boolean hasDone = false;
-        boolean hasInProgress = false;
 
         for (Subtask subtask : subtasks) {
+            if (subtask.getStatus() == Status.IN_PROGRESS) {
+                return Status.IN_PROGRESS;
+            }
             if (subtask.getStatus() == Status.NEW) {
                 hasNew = true;
             }
             if (subtask.getStatus() == Status.DONE) {
                 hasDone = true;
             }
-            if (subtask.getStatus() == Status.IN_PROGRESS) {
-                hasInProgress = true;
-            }
         }
 
-        if (hasNew && !hasDone && !hasInProgress) {
+        if (hasNew && !hasDone) {
             return Status.NEW;
         }
-
-        if (hasDone && !hasNew && !hasInProgress) {
+        if (hasDone && !hasNew) {
             return Status.DONE;
         }
 
