@@ -1,3 +1,4 @@
+import manager.InMemoryTaskManager;
 import manager.TaskManager;
 import model.Epic;
 import model.Status;
@@ -13,7 +14,7 @@ public class Main {
         Epic epic1 = new Epic("test epic 1", "desc");
         Epic epic2 = new Epic("test epic 2", "desc");
 
-        TaskManager taskManager = new TaskManager();
+        TaskManager taskManager = new InMemoryTaskManager();
 
         System.out.println("Adding tasks and epics");
         long task1id = taskManager.create(task1);
