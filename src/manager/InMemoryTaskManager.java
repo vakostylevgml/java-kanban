@@ -5,19 +5,24 @@ import model.*;
 import java.util.*;
 
 public class InMemoryTaskManager implements TaskManager {
-    private static final int HISTORY_SIZE = 10;
     private long taskId;
     private final Map<Long, Task> tasks;
     private final Map<Long, Subtask> subtasks;
     private final Map<Long, Epic> epics;
 
-    private final List<Task> vivewHistoryList;
+    private final HistoryManager historyManager;
 
-    public InMemoryTaskManager() {
+    public InMemoryTaskManager(HistoryManager historyManager) {
         tasks = new HashMap<>();
         subtasks = new HashMap<>();
         epics = new HashMap<>();
-        vivewHistoryList = new LinkedList<>();
+
+        this.historyManager = historyManager;
+    }
+
+    @Override
+    public HistoryManager getHistoryManager() {
+        return historyManager;
     }
 
     @Override
@@ -39,7 +44,7 @@ public class InMemoryTaskManager implements TaskManager {
     public Task findTaskById(long id) {
         Task task = tasks.get(id);
         if (task != null) {
-            addToHistory(task);
+            historyManager.add(task);
         }
         return task;
     }
@@ -48,7 +53,7 @@ public class InMemoryTaskManager implements TaskManager {
     public Subtask findSubTaskById(long id) {
         Subtask subtask = subtasks.get(id);
         if (subtask != null) {
-            addToHistory(subtask);
+            historyManager.add(subtask);
         }
         return subtask;
     }
@@ -57,7 +62,7 @@ public class InMemoryTaskManager implements TaskManager {
     public Epic findEpicById(long id) {
         Epic epic = epics.get(id);
         if (epic != null) {
-            addToHistory(epic);
+            historyManager.add(epic);
         }
         return epic;
     }
@@ -230,19 +235,7 @@ public class InMemoryTaskManager implements TaskManager {
         }
     }
 
-    @Override
-    public List<Task> getHistory() {
-        return vivewHistoryList;
-    }
-
     private long getTaskId() {
         return taskId++;
-    }
-
-    private void addToHistory(Task task) {
-        if (vivewHistoryList.size() == 10) {
-            vivewHistoryList.removeFirst();
-        }
-        vivewHistoryList.add(task);
     }
 }
