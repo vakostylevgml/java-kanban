@@ -5,15 +5,19 @@ import model.*;
 import java.util.*;
 
 public class InMemoryTaskManager implements TaskManager {
-    private static long taskId;
+    private static final int HISTORY_SIZE = 10;
+    private long taskId;
     private final Map<Long, Task> tasks;
     private final Map<Long, Subtask> subtasks;
     private final Map<Long, Epic> epics;
+
+    private final List<Task> vivewHistoryList;
 
     public InMemoryTaskManager() {
         tasks = new HashMap<>();
         subtasks = new HashMap<>();
         epics = new HashMap<>();
+        vivewHistoryList = new LinkedList<>();
     }
 
     @Override
@@ -33,17 +37,29 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public Task findTaskById(long id) {
-        return tasks.get(id);
+        Task task = tasks.get(id);
+        if (task != null) {
+            addToHistory(task);
+        }
+        return task;
     }
 
     @Override
     public Subtask findSubTaskById(long id) {
-        return subtasks.get(id);
+        Subtask subtask = subtasks.get(id);
+        if (subtask != null) {
+            addToHistory(subtask);
+        }
+        return subtask;
     }
 
     @Override
     public Epic findEpicById(long id) {
-        return epics.get(id);
+        Epic epic = epics.get(id);
+        if (epic != null) {
+            addToHistory(epic);
+        }
+        return epic;
     }
 
     @Override
@@ -214,7 +230,19 @@ public class InMemoryTaskManager implements TaskManager {
         }
     }
 
-    private static long getTaskId() {
+    @Override
+    public List<Task> getHistory() {
+        return vivewHistoryList;
+    }
+
+    private long getTaskId() {
         return taskId++;
+    }
+
+    private void addToHistory(Task task) {
+        if (vivewHistoryList.size() == 10) {
+            vivewHistoryList.removeFirst();
+        }
+        vivewHistoryList.add(task);
     }
 }
