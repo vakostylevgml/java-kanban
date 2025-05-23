@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Arrays;
 import java.util.Random;
 
-public class HistoryManagerTest {
+public class InMemoryHistoryManagerTest {
     static TaskManager manager;
 
     @BeforeEach
