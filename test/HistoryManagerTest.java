@@ -1,10 +1,13 @@
-package model;
-
 import manager.Managers;
 import manager.TaskManager;
+import model.Status;
+import model.Task;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.Arrays;
+import java.util.Random;
 
 public class HistoryManagerTest {
     static TaskManager manager;
@@ -51,5 +54,38 @@ public class HistoryManagerTest {
             manager.findTaskById(expectedId);
         }
         Assertions.assertEquals(10, manager.getHistoryManager().getHistory().size());
+    }
+
+    @Test
+    void tasksAreOverwrittenInCorrectOrder() {
+        Long[] insertedIds = new Long[10];
+        for (int i = 0; i < 10; i++) {
+            Task task = new Task("a" + i, "b", Status.NEW);
+            long expectedId = manager.create(task);
+            manager.findTaskById(expectedId);
+            insertedIds[i] = expectedId;
+        }
+
+        Random random = new Random();
+        Long[] expectedIds = new Long[10];
+
+        for (int i = 0; i < 10; i++) {
+            int randomIndex = random.nextInt(10);
+            long randomId = insertedIds[randomIndex];
+            manager.findTaskById(randomId);
+            expectedIds[i] = randomId;
+        }
+
+        Long[] actualIds = manager.getHistoryManager().getHistory()
+                .stream()
+                .map(Task::getId)
+                .toArray(Long[]::new);
+        Assertions.assertArrayEquals(expectedIds, actualIds);
+
+        System.out.println("Inserted: " + Arrays.toString(insertedIds));
+        System.out.println("Expected: " + Arrays.toString(expectedIds));
+        System.out.println("Actual: " + Arrays.toString(actualIds));
+
+
     }
 }

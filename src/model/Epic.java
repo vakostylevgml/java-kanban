@@ -1,38 +1,44 @@
 package model;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Epic extends Task {
-    private final Set<Subtask> subtasks;
+    private final Map<Long, Subtask> subtasks;
 
     public Epic(String name, String description) {
         super(name, description, Status.NEW);
-        subtasks = new HashSet<>();
+        subtasks = new HashMap<>();
     }
 
-    public Epic(String name, String description, Set<Subtask> subtasks) {
+    public Epic(String name, String description, Map<Long, Subtask> subtasks) {
         super(name, description, Status.NEW);
         this.subtasks = subtasks;
     }
 
-    public void addSubtask(Subtask subtask) {
-        subtasks.add(subtask);
+    public void addSubtask(Subtask subtask) throws IllegalArgumentException {
+        if (subtasks.containsKey(subtask.getId())) {
+            throw new IllegalArgumentException("Subtask " + subtask + " already exists, cannot add subtask");
+        }
+        subtasks.put(subtask.getId(), subtask);
         status = updateStatus();
     }
 
     public void removeSubtask(Subtask subtask) {
-        subtasks.remove(subtask);
+        subtasks.remove(subtask.getId());
         status = updateStatus();
     }
 
-    public void updateSubtask(Subtask subtask) {
-        subtasks.remove(subtask);
-        subtasks.add(subtask);
+    public void updateSubtask(Subtask subtask) throws IllegalArgumentException {
+        if (!subtasks.containsKey(subtask.getId())) {
+            throw new IllegalArgumentException("Subtask " + subtask + " does not exist, can't update it");
+        }
+        subtasks.remove(subtask.getId());
+        subtasks.put(subtask.getId(), subtask);
         status = updateStatus();
     }
 
-    public Set<Subtask> getSubtasks() {
+    public Map<Long, Subtask> getSubtasks() {
         return subtasks;
     }
 
@@ -46,7 +52,7 @@ public class Epic extends Task {
         boolean hasNew = false;
         boolean hasDone = false;
 
-        for (Subtask subtask : subtasks) {
+        for (Subtask subtask : subtasks.values()) {
             if (subtask.getStatus() == Status.IN_PROGRESS) {
                 return Status.IN_PROGRESS;
             }

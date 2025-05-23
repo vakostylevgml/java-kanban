@@ -4,15 +4,14 @@ import model.Epic;
 import model.Subtask;
 import model.Task;
 
-import java.util.Collection;
-import java.util.Set;
+import java.util.Map;
 
 public interface TaskManager {
-    Collection<Task> findAllTasks();
+    Map<Long, Task> findAllTasks();
 
-    Collection<Subtask> findAllSubTasks();
+    Map<Long, Subtask> findAllSubTasks();
 
-    Collection<Epic> findAllEpics();
+    Map<Long, Epic> findAllEpics();
 
     Task findTaskById(long id);
 
@@ -20,9 +19,9 @@ public interface TaskManager {
 
     Epic findEpicById(long id);
 
-    Set<Subtask> findAllSubtasks(Epic epic);
+    Map<Long, Subtask> findAllSubtasksByEpic(Epic epic);
 
-    Set<Subtask> findAllSubtasksByEpicId(long epicId);
+    Map<Long, Subtask> findAllSubtasksByEpicId(long epicId);
 
     long create(Task task);
 
