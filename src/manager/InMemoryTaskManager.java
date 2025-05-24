@@ -3,6 +3,7 @@ package manager;
 import model.*;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class InMemoryTaskManager implements TaskManager {
     private long taskId;
@@ -16,7 +17,6 @@ public class InMemoryTaskManager implements TaskManager {
         tasks = new HashMap<>();
         subtasks = new HashMap<>();
         epics = new HashMap<>();
-
         this.historyManager = historyManager;
     }
 
@@ -26,18 +26,18 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public Map<Long, Task> findAllTasks() {
-        return tasks;
+    public List<Task> findAllTasks() {
+        return List.copyOf(tasks.values());
     }
 
     @Override
-    public Map<Long, Subtask> findAllSubTasks() {
-        return subtasks;
+    public List<Subtask> findAllSubTasks() {
+        return List.copyOf(subtasks.values());
     }
 
     @Override
-    public Map<Long, Epic> findAllEpics() {
-        return epics;
+    public List<Epic> findAllEpics() {
+        return List.copyOf(epics.values());
     }
 
     @Override
@@ -68,28 +68,25 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public Map<Long, Subtask> findAllSubtasksByEpic(Epic epic) {
+    public List<Subtask> findAllSubtasksByEpic(Epic epic) {
         if (epic == null) {
-            System.out.println("Can't get subtasks because epic is null");
-            return new HashMap<>();
+            return List.of();
         } else {
             return findAllSubtasksByEpicId(epic.getId());
         }
     }
 
     @Override
-    public Map<Long, Subtask> findAllSubtasksByEpicId(long epicId) {
+    public List<Subtask> findAllSubtasksByEpicId(long epicId) {
         if (!epics.containsKey(epicId)) {
-            System.out.println("Can't get subtasks because epic does not exist");
-            return new HashMap<>();
+            return List.of();
         }
         return findEpicById(epicId).getSubtasks();
     }
 
     @Override
-    public long create(Task task) {
+    public long createTask(Task task) {
         if (task == null) {
-            System.out.println("Can't create. Task is null");
             return -1;
         }
         task.setId(getTaskId());
@@ -98,14 +95,8 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public long create(Subtask subtask) {
-        if (subtask == null) {
-            System.out.println("Can't create. Subtask is null");
-            return -1;
-        }
-        if (!epics.containsKey(subtask.getEpicId())) {
-            System.out.printf("Can't create subtask because epic with id %d does not exist \n",
-                    subtask.getEpicId());
+    public long createSubtask(Subtask subtask) {
+        if (subtask == null || !epics.containsKey(subtask.getEpicId())) {
             return -1;
         }
 
@@ -117,13 +108,8 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public long create(Epic epic) {
+    public long createEpic(Epic epic) {
         if (epic == null) {
-            System.out.println("Can't create. Epic is null");
-            return -1;
-        }
-        if (epic.getSubtasks() == null) {
-            System.out.println("Can't create epic because epic with subtasks is null");
             return -1;
         }
 
@@ -133,13 +119,8 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public Task update(Task task) {
-        if (task == null) {
-            System.out.println("Can't update. Task is null");
-            return null;
-        }
-        if (!tasks.containsKey(task.getId())) {
-            System.out.println("Can't update because task with id " + task.getId() + " does not exist");
+    public Task updateTask(Task task) {
+        if (task == null || !tasks.containsKey(task.getId())) {
             return null;
         }
 
@@ -147,20 +128,14 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public Subtask update(Subtask subtask) {
-        if (subtask == null) {
-            System.out.println("Can't update. Subtask is null");
-            return null;
-        }
-        if (!subtasks.containsKey(subtask.getId())) {
-            System.out.println("Can't update because subtask with id " + subtask.getId() + " does not exist");
+    public Subtask updateSubtask(Subtask subtask) {
+        if (subtask == null || !subtasks.containsKey(subtask.getId())) {
             return null;
         }
 
         Subtask oldSubtask = subtasks.get(subtask.getId());
         if (oldSubtask.getEpicId() != subtask.getEpicId()) {
             if (!epics.containsKey(subtask.getEpicId())) {
-                System.out.println("Can't update because epic with id " + subtask.getEpicId() + " does not exist");
                 return null;
             }
             Epic oldEpic = findEpicById(oldSubtask.getEpicId());
@@ -175,29 +150,19 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public Epic update(Epic epic) {
-        if (epic == null) {
-            System.out.println("Can't update epic. Epic is null");
+    public Epic updateEpic(Epic epic) {
+        if (epic == null || !epics.containsKey(epic.getId())) {
             return null;
         }
 
-        if (!epics.containsKey(epic.getId())) {
-            System.out.println("Can't update epic because epic with id " + epic.getId() + " does not exist");
-            return null;
-        }
+        Set<Long> newSubtaskIds = epic.getSubtasks().stream()
+                .map(Subtask::getId)
+                .collect(Collectors.toSet());
 
-        if (epic.getSubtasks() == null) {
-            System.out.println("Can't update epic because epic's subtask list is null");
-            return null;
-        }
-
-        Set<Long> newSubtaskIds = epic.getSubtasks().keySet();
         if (!subtasks.keySet().containsAll(newSubtaskIds)) {
-            System.out.println("Can't update because updated epic contains subtasks which do not exist");
             return null;
         }
 
-        subtasks.putAll(epic.getSubtasks());
         epics.put(epic.getId(), epic);
         return epic;
     }

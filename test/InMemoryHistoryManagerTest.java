@@ -25,7 +25,7 @@ public class InMemoryHistoryManagerTest {
     @Test
     void taskIsAddedToHistory() {
         Task task = new Task("a", "b", Status.NEW);
-        long expectedId = manager.create(task);
+        long expectedId = manager.createTask(task);
         manager.findTaskById(expectedId);
         Assertions.assertEquals(expectedId, manager.getHistoryManager().getHistory().getFirst().getId());
     }
@@ -35,7 +35,7 @@ public class InMemoryHistoryManagerTest {
         Long[] expectedIds = new Long[10];
         for (int i = 0; i < 10; i++) {
             Task task = new Task("a" + i, "b", Status.NEW);
-            long expectedId = manager.create(task);
+            long expectedId = manager.createTask(task);
             manager.findTaskById(expectedId);
             expectedIds[i] = expectedId;
         }
@@ -50,7 +50,7 @@ public class InMemoryHistoryManagerTest {
     void elevenTasksAreNotAddedToHistory() {
         for (int i = 0; i < 11; i++) {
             Task task = new Task("a" + i, "b", Status.NEW);
-            long expectedId = manager.create(task);
+            long expectedId = manager.createTask(task);
             manager.findTaskById(expectedId);
         }
         Assertions.assertEquals(10, manager.getHistoryManager().getHistory().size());
@@ -61,7 +61,7 @@ public class InMemoryHistoryManagerTest {
         Long[] insertedIds = new Long[10];
         for (int i = 0; i < 10; i++) {
             Task task = new Task("a" + i, "b", Status.NEW);
-            long expectedId = manager.create(task);
+            long expectedId = manager.createTask(task);
             manager.findTaskById(expectedId);
             insertedIds[i] = expectedId;
         }

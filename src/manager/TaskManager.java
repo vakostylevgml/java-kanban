@@ -4,14 +4,14 @@ import model.Epic;
 import model.Subtask;
 import model.Task;
 
-import java.util.Map;
+import java.util.List;
 
 public interface TaskManager {
-    Map<Long, Task> findAllTasks();
+    List<Task> findAllTasks();
 
-    Map<Long, Subtask> findAllSubTasks();
+    List<Subtask> findAllSubTasks();
 
-    Map<Long, Epic> findAllEpics();
+    List<Epic> findAllEpics();
 
     Task findTaskById(long id);
 
@@ -19,21 +19,21 @@ public interface TaskManager {
 
     Epic findEpicById(long id);
 
-    Map<Long, Subtask> findAllSubtasksByEpic(Epic epic);
+    List<Subtask> findAllSubtasksByEpic(Epic epic);
 
-    Map<Long, Subtask> findAllSubtasksByEpicId(long epicId);
+    List<Subtask> findAllSubtasksByEpicId(long epicId);
 
-    long create(Task task);
+    long createTask(Task task);
 
-    long create(Subtask subtask);
+    long createSubtask(Subtask subtask);
 
-    long create(Epic epic);
+    long createEpic(Epic epic);
 
-    Task update(Task task);
+    Task updateTask(Task task);
 
-    Subtask update(Subtask subtask);
+    Subtask updateSubtask(Subtask subtask);
 
-    Epic update(Epic epic);
+    Epic updateEpic(Epic epic);
 
     void deleteTaskById(long id);
 

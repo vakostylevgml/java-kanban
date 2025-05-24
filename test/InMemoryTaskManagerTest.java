@@ -20,10 +20,10 @@ public class InMemoryTaskManagerTest {
     void testTasksAreAddedAndFoundOk() {
         Task task = new Task("task", "desc", Status.DONE);
         Epic epic = new Epic("epic", "d");
-        long taskId = manager.create(task);
-        long epicId = manager.create(epic);
+        long taskId = manager.createTask(task);
+        long epicId = manager.createEpic(epic);
         Subtask subtask = new Subtask("subtask", "de", Status.DONE, epicId);
-        long subtaskId = manager.create(subtask);
+        long subtaskId = manager.createSubtask(subtask);
 
         Assertions.assertEquals(1, manager.findAllTasks().size());
         Assertions.assertEquals(1, manager.findAllSubTasks().size());

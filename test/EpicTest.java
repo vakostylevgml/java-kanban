@@ -4,7 +4,7 @@ import model.Subtask;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.util.Map;
+import java.util.List;
 
 public class EpicTest {
     @Test
@@ -39,10 +39,9 @@ public class EpicTest {
         subtaskUpdated.setId(1);
         epic.updateSubtask(subtaskUpdated);
 
-        Map<Long, Subtask> subtasks = epic.getSubtasks();
+        List<Subtask> subtasks = epic.getSubtasks();
         Assertions.assertEquals(2, subtasks.size());
-        Assertions.assertTrue(subtasks.containsKey(subtaskUpdated.getId()));
-        Subtask requested = subtasks.get(subtaskUpdated.getId());
+        Subtask requested = subtasks.stream().filter(s -> s.getId() == 1).findFirst().get();
         Assertions.assertEquals(subtaskUpdated.getDescription(), requested.getDescription());
         Assertions.assertEquals(subtaskUpdated.getStatus(), requested.getStatus());
     }
