@@ -85,7 +85,21 @@ public class InMemoryHistoryManagerTest {
         System.out.println("Inserted: " + Arrays.toString(insertedIds));
         System.out.println("Expected: " + Arrays.toString(expectedIds));
         System.out.println("Actual: " + Arrays.toString(actualIds));
+    }
 
+    @Test
+    void taskIsPreservedInHistory() {
+        Task task = new Task("a", "b", Status.NEW);
+        long expectedId = manager.createTask(task);
+        manager.findTaskById(expectedId);
+        Task updatedTask = new Task("a updated", "b", Status.DONE);
+        updatedTask.setId(expectedId);
+        manager.updateTask(updatedTask);
+        manager.findTaskById(expectedId);
+        Assertions.assertEquals(task.getTitle(), manager.getHistoryManager().getHistory().getFirst().getTitle());
+        Assertions.assertEquals(task.getStatus(), manager.getHistoryManager().getHistory().getFirst().getStatus());
+        Assertions.assertEquals(updatedTask.getTitle(), manager.getHistoryManager().getHistory().get(1).getTitle());
+        Assertions.assertEquals(updatedTask.getStatus(), manager.getHistoryManager().getHistory().get(1).getStatus());
 
     }
 }
