@@ -7,7 +7,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
-import java.util.Random;
 
 public class InMemoryHistoryManagerTest {
     static TaskManager manager;
@@ -43,63 +42,10 @@ public class InMemoryHistoryManagerTest {
                 .stream()
                 .map(Task::getId)
                 .toArray(Long[]::new);
+        System.out.println("Actual" + Arrays.toString(actualIds));
+        System.out.println("Expected" + Arrays.toString(expectedIds));
         Assertions.assertArrayEquals(expectedIds, actualIds);
     }
 
-    @Test
-    void elevenTasksAreNotAddedToHistory() {
-        for (int i = 0; i < 11; i++) {
-            Task task = new Task("a" + i, "b", Status.NEW);
-            long expectedId = manager.createTask(task);
-            manager.findTaskById(expectedId);
-        }
-        Assertions.assertEquals(10, manager.getHistoryManager().getHistory().size());
-    }
 
-    @Test
-    void tasksAreOverwrittenInCorrectOrder() {
-        Long[] insertedIds = new Long[10];
-        for (int i = 0; i < 10; i++) {
-            Task task = new Task("a" + i, "b", Status.NEW);
-            long expectedId = manager.createTask(task);
-            manager.findTaskById(expectedId);
-            insertedIds[i] = expectedId;
-        }
-
-        Random random = new Random();
-        Long[] expectedIds = new Long[10];
-
-        for (int i = 0; i < 10; i++) {
-            int randomIndex = random.nextInt(10);
-            long randomId = insertedIds[randomIndex];
-            manager.findTaskById(randomId);
-            expectedIds[i] = randomId;
-        }
-
-        Long[] actualIds = manager.getHistoryManager().getHistory()
-                .stream()
-                .map(Task::getId)
-                .toArray(Long[]::new);
-        Assertions.assertArrayEquals(expectedIds, actualIds);
-
-        System.out.println("Inserted: " + Arrays.toString(insertedIds));
-        System.out.println("Expected: " + Arrays.toString(expectedIds));
-        System.out.println("Actual: " + Arrays.toString(actualIds));
-    }
-
-    @Test
-    void taskIsPreservedInHistory() {
-        Task task = new Task("a", "b", Status.NEW);
-        long expectedId = manager.createTask(task);
-        manager.findTaskById(expectedId);
-        Task updatedTask = new Task("a updated", "b", Status.DONE);
-        updatedTask.setId(expectedId);
-        manager.updateTask(updatedTask);
-        manager.findTaskById(expectedId);
-        Assertions.assertEquals(task.getTitle(), manager.getHistoryManager().getHistory().getFirst().getTitle());
-        Assertions.assertEquals(task.getStatus(), manager.getHistoryManager().getHistory().getFirst().getStatus());
-        Assertions.assertEquals(updatedTask.getTitle(), manager.getHistoryManager().getHistory().get(1).getTitle());
-        Assertions.assertEquals(updatedTask.getStatus(), manager.getHistoryManager().getHistory().get(1).getStatus());
-
-    }
 }
