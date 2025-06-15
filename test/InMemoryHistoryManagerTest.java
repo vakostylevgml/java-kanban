@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
 import java.util.List;
 
 public class InMemoryHistoryManagerTest {
@@ -43,8 +42,6 @@ public class InMemoryHistoryManagerTest {
                 .stream()
                 .map(Task::getId)
                 .toArray(Long[]::new);
-        System.out.println("Actual" + Arrays.toString(actualIds));
-        System.out.println("Expected" + Arrays.toString(expectedIds));
         Assertions.assertArrayEquals(expectedIds, actualIds);
     }
 
@@ -65,7 +62,6 @@ public class InMemoryHistoryManagerTest {
         manager.updateTask(updated);
         manager.findTaskById(expectedId);
         history = manager.getHistoryManager().getHistory();
-        System.out.println("Actual" + Arrays.toString(history.toArray()));
         Assertions.assertEquals(1, history.size());
         Assertions.assertEquals(expectedId, manager.getHistoryManager().getHistory().getFirst().getId());
         Assertions.assertEquals(updated.getTitle(), manager.getHistoryManager().getHistory().getFirst().getTitle());
@@ -78,9 +74,78 @@ public class InMemoryHistoryManagerTest {
         manager.findTaskById(expectedId);
         List<Task> history = manager.getHistoryManager().getHistory();
         Assertions.assertEquals(1, history.size());
-
-
+        manager.deleteTaskById(expectedId);
+        history = manager.getHistoryManager().getHistory();
+        Assertions.assertEquals(0, history.size());
     }
 
+    @Test
+    void twoTasksInHistoryOneDeletedFromHead() {
+        Task task1 = new Task("a", "b", Status.NEW);
+        Task task2 = new Task("a", "b", Status.NEW);
+
+        long expectedId1 = manager.createTask(task1);
+        manager.findTaskById(expectedId1);
+        long expectedId2 = manager.createTask(task2);
+        manager.findTaskById(expectedId2);
+
+        List<Task> history = manager.getHistoryManager().getHistory();
+        Assertions.assertEquals(2, history.size());
+
+        manager.deleteTaskById(expectedId1);
+        history = manager.getHistoryManager().getHistory();
+        Assertions.assertEquals(1, history.size());
+        Assertions.assertEquals(expectedId2, manager.getHistoryManager().getHistory().getFirst().getId());
+        manager.deleteTaskById(expectedId2);
+        history = manager.getHistoryManager().getHistory();
+        Assertions.assertEquals(0, history.size());
+    }
+
+    @Test
+    void twoTasksInHistoryDeletedFromTail() {
+        Task task1 = new Task("a", "b", Status.NEW);
+        Task task2 = new Task("a3", "b3", Status.NEW);
+
+        long expectedId1 = manager.createTask(task1);
+        manager.findTaskById(expectedId1);
+        long expectedId2 = manager.createTask(task2);
+        manager.findTaskById(expectedId2);
+
+        List<Task> history = manager.getHistoryManager().getHistory();
+        Assertions.assertEquals(2, history.size());
+        manager.deleteTaskById(expectedId2);
+        history = manager.getHistoryManager().getHistory();
+        Assertions.assertEquals(1, history.size());
+
+        Assertions.assertEquals(expectedId1, manager.getHistoryManager().getHistory().getFirst().getId());
+        manager.deleteTaskById(expectedId1);
+        history = manager.getHistoryManager().getHistory();
+        Assertions.assertEquals(0, history.size());
+    }
+
+    @Test
+    void threeTasksInHistoryDeletedFromMiddle() {
+        Task task1 = new Task("a", "b", Status.NEW);
+        Task task2 = new Task("a2", "b2", Status.NEW);
+        Task task3 = new Task("a3", "b3", Status.NEW);
+
+        long expectedId1 = manager.createTask(task1);
+        manager.findTaskById(expectedId1);
+        long expectedId2 = manager.createTask(task2);
+        manager.findTaskById(expectedId2);
+        long expectedId3 = manager.createTask(task3);
+        manager.findTaskById(expectedId3);
+
+        List<Task> history = manager.getHistoryManager().getHistory();
+        Assertions.assertEquals(3, history.size());
+        manager.deleteTaskById(expectedId2);
+        history = manager.getHistoryManager().getHistory();
+        Assertions.assertEquals(2, history.size());
+
+        manager.deleteTaskById(expectedId1);
+        history = manager.getHistoryManager().getHistory();
+        Assertions.assertEquals(1, history.size());
+
+    }
 
 }

@@ -18,7 +18,6 @@ public class InMemoryHistoryManager implements HistoryManager {
     @Override
     public void add(Task task) {
         if (tasksMap.containsKey(task.getId())) {
-            System.out.println("contains key");
             removeNode(tasksMap.get(task.getId()));
         }
 
@@ -33,20 +32,23 @@ public class InMemoryHistoryManager implements HistoryManager {
             tail = newNode;
             newNode.prev = currentHead;
             tasksMap.put(task.getId(), newNode);
-            tasksMap.put(task.getId(), currentHead);
+            tasksMap.put(currentHead.t.getId(), currentHead);
         } else {
             Node currentTail = tail;
             currentTail.next = newNode;
             tail = newNode;
             newNode.prev = currentTail;
             tasksMap.put(task.getId(), newNode);
-            tasksMap.put(task.getId(), currentTail);
+            tasksMap.put(currentTail.t.getId(), currentTail);
         }
     }
 
     @Override
     public void remove(long id) {
-        removeNode(tasksMap.get(id));
+        if (tasksMap.containsKey(id)) {
+            Node toRemove = tasksMap.get(id);
+            removeNode(toRemove);
+        }
     }
 
     @Override
@@ -68,10 +70,9 @@ public class InMemoryHistoryManager implements HistoryManager {
         }
     }
 
-    private void removeNode(Node node) {
-        Node toRemove = tasksMap.get(node.t.getId());
+    private void removeNode(Node toRemove) {
         if (toRemove != null) {
-            tasksMap.remove(node.t.getId());
+            tasksMap.remove(toRemove);
 
             if (toRemove == head && toRemove == tail) {
                 head = null;
@@ -85,7 +86,7 @@ public class InMemoryHistoryManager implements HistoryManager {
                 Node prev = toRemove.prev;
                 prev.next = null;
                 tasksMap.put(prev.t.getId(), prev);
-                tail = toRemove.prev;
+                tail = prev;
             } else {
                 Node next = toRemove.next;
                 Node prev = toRemove.prev;
