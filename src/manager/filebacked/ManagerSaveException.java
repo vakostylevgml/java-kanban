@@ -1,6 +1,4 @@
-package manager;
-
-import java.io.IOException;
+package manager.filebacked;
 
 public class ManagerSaveException extends RuntimeException {
     public ManagerSaveException(String message) {

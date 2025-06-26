@@ -1,5 +1,8 @@
 package manager;
 
+import manager.inmemory.InMemoryHistoryManager;
+import manager.inmemory.InMemoryTaskManager;
+
 public class Managers {
 
     private Managers() {

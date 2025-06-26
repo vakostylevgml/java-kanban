@@ -1,5 +1,6 @@
-package manager;
+package manager.inmemory;
 
+import manager.HistoryManager;
 import model.Task;
 
 import java.util.*;
