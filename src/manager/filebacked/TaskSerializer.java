@@ -3,6 +3,7 @@ package manager.filebacked;
 import model.*;
 
 public class TaskSerializer {
+
     private TaskSerializer() {}
 
     public static String serrializeToString(Task task) {

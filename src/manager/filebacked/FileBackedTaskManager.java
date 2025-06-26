@@ -81,6 +81,10 @@ public class FileBackedTaskManager extends InMemoryTaskManager implements TaskMa
         if (!this.epics.isEmpty() || !this.subtasks.isEmpty() || !this.tasks.isEmpty()) {
             System.out.println("Cannot load epics from file: storage isn't empty");
         } else {
+            int epicsCount = 0;
+            int subtasksCount = 0;
+            int tasksCount = 0;
+
             try (BufferedReader fileReader = new BufferedReader(new FileReader(file))) {
                 while (fileReader.ready()) {
                     String line = fileReader.readLine();
@@ -88,22 +92,29 @@ public class FileBackedTaskManager extends InMemoryTaskManager implements TaskMa
 
                     if (task instanceof Epic epic) {
                         epics.put(epic.getId(), epic);
+                        epicsCount++;
                     } else if (task instanceof Subtask subtask) {
                         if (epics.containsKey(subtask.getEpicId())) {
                             subtasks.put(subtask.getId(), subtask);
                             Epic epic = epics.get(subtask.getEpicId());
                             epic.addSubtask(subtask);
-
+                            subtasksCount++;
                         } else {
                             throw new ManagerSaveException("Can't add subtask with unexistent epic");
                         }
                     } else {
                         tasks.put(task.getId(), task);
+                        tasksCount++;
                     }
-
                 }
             } catch (Exception e) {
                 System.out.println(e.getMessage());
+            } finally {
+                if (epics.isEmpty() && subtasks.isEmpty() && tasks.isEmpty()) {
+                    System.out.println("No tasks found");
+                } else {
+                    System.out.printf("Added %d tasks, %d subtasks, %d epics \n",  tasksCount, subtasksCount, epicsCount);
+                }
             }
         }
     }
