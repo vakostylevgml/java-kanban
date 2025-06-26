@@ -1,5 +1,7 @@
-package manager;
+package manager.inmemory;
 
+import manager.HistoryManager;
+import manager.TaskManager;
 import model.*;
 
 import java.util.*;

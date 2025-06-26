@@ -2,7 +2,7 @@ package model;
 
 import java.util.Objects;
 
-public class Task implements SerializableToFile<Task> {
+public class Task {
     private final String title;
     private final String description;
     protected Status status;
@@ -52,43 +52,4 @@ public class Task implements SerializableToFile<Task> {
         return "[TaskId = " + getId() + ", title = " + getTitle() + ", status = " + status + "]";
     }
 
-    @Override
-    public String serrializeToString() {
-        return id +
-                "," +
-                TaskType.TASK +
-                "," +
-                title +
-                "," +
-                status +
-                "," +
-                description;
-    }
-
-    @Override
-    public Task serializeFromString(String stringFromFile) throws IllegalArgumentException {
-        if (stringFromFile == null || stringFromFile.isEmpty()) {
-            throw new IllegalArgumentException("String is null or empty");
-        }
-
-        String[] split = stringFromFile.split(",");
-        if (split.length != 5) {
-            throw new IllegalArgumentException("Invalid string length, required 5 got: " + split.length);
-        }
-
-        long id = Long.parseLong(split[0]);
-        TaskType type = TaskType.valueOf(split[1]);
-
-        if (type != TaskType.TASK) {
-            throw new IllegalArgumentException("Invalid task type for task with id " + id);
-        }
-
-        String title = split[2];
-        Status status = Status.valueOf(split[3]);
-        String description = split[4];
-        Task task = new Task(title, description, status);
-        task.setId(id);
-        return task;
-
-    }
 }
