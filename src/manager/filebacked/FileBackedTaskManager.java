@@ -1,10 +1,13 @@
 package manager.filebacked;
 
 import manager.HistoryManager;
-import manager.inmemory.InMemoryTaskManager;
 import manager.TaskManager;
+import manager.inmemory.InMemoryTaskManager;
+import model.Epic;
+import model.Subtask;
+import model.Task;
 
-import java.io.File;
+import java.io.*;
 
 public class FileBackedTaskManager extends InMemoryTaskManager implements TaskManager {
     private static String FILENAME;
@@ -14,12 +17,118 @@ public class FileBackedTaskManager extends InMemoryTaskManager implements TaskMa
         FILENAME = fileName;
     }
 
-    public static void loadFromFile(File file) {
+    @Override
+    public long createTask(Task task) {
+        super.createTask(task);
+        save();
+        return task.getId();
+    }
 
+    @Override
+    public long createSubtask(Subtask subtask) {
+        super.createSubtask(subtask);
+        save();
+        return subtask.getId();
+    }
+
+    @Override
+    public long createEpic(Epic epic) {
+        super.createEpic(epic);
+        save();
+        return epic.getId();
+    }
+
+    @Override
+    public Task updateTask(Task task) {
+        Task updatedTask = super.updateTask(task);
+        save();
+        return updatedTask;
+    }
+
+    @Override
+    public Subtask updateSubtask(Subtask subtask) {
+        Subtask updatedSubtask = super.updateSubtask(subtask);
+        save();
+        return updatedSubtask;
+    }
+
+    @Override
+    public Epic updateEpic(Epic epic) {
+        Epic updatedEpic = super.updateEpic(epic);
+        save();
+        return updatedEpic;
+    }
+
+    @Override
+    public void deleteTaskById(long id) {
+        super.deleteTaskById(id);
+        save();
+    }
+
+    @Override
+    public void deleteSubtaskById(long id) {
+        super.deleteSubtaskById(id);
+        save();
+    }
+
+    @Override
+    public void deleteEpicById(long id) {
+        super.deleteEpicById(id);
+        save();
+    }
+
+    public void loadFromFile(File file) {
+        if (!this.epics.isEmpty() || !this.subtasks.isEmpty() || !this.tasks.isEmpty()) {
+            System.out.println("Cannot load epics from file: storage isn't empty");
+        } else {
+            try (BufferedReader fileReader = new BufferedReader(new FileReader(file))) {
+                while (fileReader.ready()) {
+                    String line = fileReader.readLine();
+                    Task task = TaskSerializer.serializeTaskFromString(line);
+
+                    if (task instanceof Epic epic) {
+                        epics.put(epic.getId(), epic);
+                    } else if (task instanceof Subtask subtask) {
+                        if (epics.containsKey(subtask.getEpicId())) {
+                            subtasks.put(subtask.getId(), subtask);
+                            Epic epic = epics.get(subtask.getEpicId());
+                            epic.addSubtask(subtask);
+
+                        } else {
+                            throw new ManagerSaveException("Can't add subtask with unexistent epic");
+                        }
+                    } else {
+                        tasks.put(task.getId(), task);
+                    }
+
+                }
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+            }
+        }
     }
 
     private void save() {
+        try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(FILENAME))) {
+            for (Task task : tasks.values()) {
+                bufferedWriter.write(TaskSerializer.serrializeToString(task));
+                bufferedWriter.newLine();
+            }
 
+            for (Epic epic : epics.values()) {
+                bufferedWriter.write(TaskSerializer.serrializeToString(epic));
+                bufferedWriter.newLine();
+            }
+
+            for (Subtask subtask : subtasks.values()) {
+                bufferedWriter.write(TaskSerializer.serrializeToString(subtask));
+                bufferedWriter.newLine();
+            }
+
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
     }
 
 
