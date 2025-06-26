@@ -1,10 +1,5 @@
 import manager.Managers;
-import manager.TaskManager;
 import manager.filebacked.FileBackedTaskManager;
-import model.Epic;
-import model.Status;
-import model.Subtask;
-import model.Task;
 
 import java.io.File;
 
@@ -22,14 +17,12 @@ public class Main {
         Subtask subtask = new Subtask("subtask", "de", Status.IN_PROGRESS, epicId);
         long subtaskId = fileBacked.createSubtask(subtask);
 */
-         
+
         fileBacked.loadFromFile(new File(PATH));
 
         System.out.println(fileBacked.findAllTasks());
         System.out.println(fileBacked.findAllSubTasks());
         System.out.println(fileBacked.findAllEpics());
-
-
 
 
     }
