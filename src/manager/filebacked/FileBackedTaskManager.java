@@ -1,6 +1,7 @@
 package manager.filebacked;
 
 import manager.HistoryManager;
+import manager.Managers;
 import manager.TaskManager;
 import manager.inmemory.InMemoryTaskManager;
 import model.Epic;
@@ -77,10 +78,10 @@ public class FileBackedTaskManager extends InMemoryTaskManager implements TaskMa
         save();
     }
 
-    public void loadFromFile(File file) {
-        if (!this.epics.isEmpty() || !this.subtasks.isEmpty() || !this.tasks.isEmpty()) {
-            System.out.println("Cannot load epics from file: storage isn't empty");
-        } else {
+    public static FileBackedTaskManager loadFromFile(File file) {
+            FileBackedTaskManager manager = new FileBackedTaskManager(Managers.getDefaultHistory(),
+                    file.getAbsolutePath());
+
             int epicsCount = 0;
             int subtasksCount = 0;
             int tasksCount = 0;
@@ -91,32 +92,32 @@ public class FileBackedTaskManager extends InMemoryTaskManager implements TaskMa
                     Task task = TaskSerializer.serializeTaskFromString(line);
 
                     if (task instanceof Epic epic) {
-                        epics.put(epic.getId(), epic);
+                        manager.epics.put(epic.getId(), epic);
                         epicsCount++;
                     } else if (task instanceof Subtask subtask) {
-                        if (epics.containsKey(subtask.getEpicId())) {
-                            subtasks.put(subtask.getId(), subtask);
-                            Epic epic = epics.get(subtask.getEpicId());
+                        if (manager.epics.containsKey(subtask.getEpicId())) {
+                            manager.subtasks.put(subtask.getId(), subtask);
+                            Epic epic = manager.epics.get(subtask.getEpicId());
                             epic.addSubtask(subtask);
                             subtasksCount++;
                         } else {
                             throw new ManagerSaveException("Can't add subtask with unexistent epic");
                         }
                     } else {
-                        tasks.put(task.getId(), task);
+                        manager.tasks.put(task.getId(), task);
                         tasksCount++;
                     }
                 }
             } catch (Exception e) {
                 System.out.println(e.getMessage());
             } finally {
-                if (epics.isEmpty() && subtasks.isEmpty() && tasks.isEmpty()) {
+                if (manager.epics.isEmpty() && manager.subtasks.isEmpty() && manager.tasks.isEmpty()) {
                     System.out.println("No tasks found");
                 } else {
                     System.out.printf("Added %d tasks, %d subtasks, %d epics \n",  tasksCount, subtasksCount, epicsCount);
                 }
             }
-        }
+            return manager;
     }
 
     private void save() {

@@ -44,13 +44,7 @@ public class FileBackedTaskManagerTest {
     @Test
     @Order(2)
     public void testUserScenarioLoadingOk() {
-        manager = Managers.getFileBacked(tempFile.toString());
-
-        Assertions.assertTrue(manager.findAllTasks().isEmpty());
-        Assertions.assertTrue(manager.findAllSubTasks().isEmpty());
-        Assertions.assertTrue(manager.findAllEpics().isEmpty());
-
-        manager.loadFromFile(tempFile.toFile());
+        manager = FileBackedTaskManager.loadFromFile(tempFile.toFile());
 
         Assertions.assertEquals(1, manager.findAllTasks().size());
         Assertions.assertEquals(1, manager.findAllEpics().size());
