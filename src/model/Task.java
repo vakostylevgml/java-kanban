@@ -3,10 +3,10 @@ package model;
 import java.util.Objects;
 
 public class Task {
-    private long id;
     private final String title;
     private final String description;
     protected Status status;
+    private long id;
 
     public Task(String title, String description, Status status) {
         this.title = title;
@@ -51,4 +51,5 @@ public class Task {
     public String toString() {
         return "[TaskId = " + getId() + ", title = " + getTitle() + ", status = " + status + "]";
     }
+
 }

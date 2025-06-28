@@ -1,5 +1,7 @@
-package manager;
+package manager.inmemory;
 
+import manager.HistoryManager;
+import manager.TaskManager;
 import model.*;
 
 import java.util.*;
@@ -7,9 +9,9 @@ import java.util.stream.Collectors;
 
 public class InMemoryTaskManager implements TaskManager {
     private long taskId;
-    private final Map<Long, Task> tasks;
-    private final Map<Long, Subtask> subtasks;
-    private final Map<Long, Epic> epics;
+    protected final Map<Long, Task> tasks;
+    protected final Map<Long, Subtask> subtasks;
+    protected final Map<Long, Epic> epics;
 
     private final HistoryManager historyManager;
 
