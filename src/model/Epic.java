@@ -1,9 +1,8 @@
 package model;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.*;
 
 public class Epic extends Task {
     private final Map<Long, Subtask> subtasks;
@@ -11,11 +10,6 @@ public class Epic extends Task {
     public Epic(String name, String description) {
         super(name, description, Status.NEW);
         subtasks = new HashMap<>();
-    }
-
-    public Epic(String name, String description, Map<Long, Subtask> subtasks) {
-        super(name, description, Status.NEW);
-        this.subtasks = subtasks;
     }
 
     public void addSubtask(Subtask subtask) throws IllegalArgumentException {
@@ -48,6 +42,31 @@ public class Epic extends Task {
     public String toString() {
         return "[TaskId = " + getId() + ", title = " + getTitle() + ", status = " + status
                 + ", subtasksSize = " + subtasks.size() + "]";
+    }
+
+    @Override
+    public Optional<LocalDateTime> getEndTime() {
+        return subtasks.values().stream()
+                .filter(s -> s.getEndTime().isPresent())
+                .sorted(Comparator.comparing(s -> s.getEndTime().get(), Comparator.reverseOrder()))
+                        .map(s -> s.getEndTime().get())
+                .findFirst();
+    }
+
+    @Override
+    public Duration getDuration() {
+        return subtasks.values().stream()
+                .map(Task::getDuration)
+                .reduce(Duration.ZERO, Duration::plus);
+    }
+
+    @Override
+    public Optional<LocalDateTime> getStartTime() {
+        return subtasks.values().stream()
+                .filter(s -> s.getStartTime().isPresent())
+                .sorted(Comparator.comparing(s -> s.getStartTime().get()))
+                .map(s -> s.getStartTime().get())
+                .findFirst();
     }
 
     private Status updateStatus() {

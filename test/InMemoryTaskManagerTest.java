@@ -74,7 +74,5 @@ public class InMemoryTaskManagerTest {
         manager.deleteEpicById(epicId1);
         history = manager.getHistoryManager().getHistory();
         Assertions.assertEquals(3, history.size());
-
-
     }
 }

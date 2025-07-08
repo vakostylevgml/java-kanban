@@ -3,6 +3,17 @@ import manager.filebacked.FileBackedTaskManager;
 
 import java.io.File;
 
+/*
+@TODO One list for all?
+@TODO Save duration to file
+@TODO Get all tasks sorted by startTime, O(n)
+@TODO overlap check
+@TODO replace loops with streams
+@TODO tests
+@TODO Optional
+@TODO advanced overlap
+ */
+
 public class Main {
     private static final String PATH = "C:\\Users\\kosty\\IdeaProjects\\java-kanban1\\data.csv";
 
