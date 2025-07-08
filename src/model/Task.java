@@ -22,8 +22,14 @@ public class Task {
 
     public Task(String title, String description, Status status, LocalDateTime startTime, Duration durationInMinutes) {
         this(title, description, status);
-        this.startTime = startTime;
-        this.durationInMinutes = durationInMinutes;
+
+        if (durationInMinutes == null || startTime == null) {
+            this.durationInMinutes = Duration.ZERO;
+            this.startTime = null;
+        } else {
+            this.startTime = startTime;
+            this.durationInMinutes = durationInMinutes;
+        }
     }
 
     @Override
@@ -74,7 +80,7 @@ public class Task {
     public Optional<LocalDateTime> getEndTime() {
         if (getStartTime().isPresent()) {
             return Optional.of(getStartTime().get().plus(getDuration()));
-        } else  {
+        } else {
             return Optional.empty();
         }
     }

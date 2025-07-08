@@ -13,7 +13,7 @@ public class TaskSerializerTest {
         Task created =  new Task("title", "desc", Status.NEW);
         created.setId(1);
         String createdString = TaskSerializer.serrializeToString(created);
-        Task restored =  TaskSerializer.serializeTaskFromString(createdString);
+        Task restored =  TaskSerializer.deSerializeTaskFromString(createdString);
         Assert.assertEquals(created.getId(), restored.getId());
         Assert.assertEquals(created.getTitle(), restored.getTitle());
         Assert.assertEquals(created.getDescription(), restored.getDescription());
@@ -25,7 +25,7 @@ public class TaskSerializerTest {
         Subtask created =  new Subtask("title", "desc", Status.NEW, 888);
         created.setId(1);
         String createdString = TaskSerializer.serrializeToString(created);
-        Subtask restored =  (Subtask) TaskSerializer.serializeTaskFromString(createdString);
+        Subtask restored =  (Subtask) TaskSerializer.deSerializeTaskFromString(createdString);
         Assert.assertEquals(created.getId(), restored.getId());
         Assert.assertEquals(created.getTitle(), restored.getTitle());
         Assert.assertEquals(created.getDescription(), restored.getDescription());
@@ -39,7 +39,7 @@ public class TaskSerializerTest {
         Epic created =  new Epic("title", "desc");
         created.setId(1);
         String createdString = TaskSerializer.serrializeToString(created);
-        Epic restored =  (Epic) TaskSerializer.serializeTaskFromString(createdString);
+        Epic restored =  (Epic) TaskSerializer.deSerializeTaskFromString(createdString);
         Assert.assertEquals(created.getId(), restored.getId());
         Assert.assertEquals(created.getTitle(), restored.getTitle());
         Assert.assertEquals(created.getDescription(), restored.getDescription());
@@ -49,16 +49,16 @@ public class TaskSerializerTest {
 
     @Test
     public void testExceptionIfEmpty() {
-        Assert.assertThrows(IllegalArgumentException.class, () -> TaskSerializer.serializeTaskFromString(""));
+        Assert.assertThrows(IllegalArgumentException.class, () -> TaskSerializer.deSerializeTaskFromString(""));
     }
 
     @Test
     public void testExceptionIfNotEnough() {
-        Assert.assertThrows(IllegalArgumentException.class, () -> TaskSerializer.serializeTaskFromString("a,b"));
+        Assert.assertThrows(IllegalArgumentException.class, () -> TaskSerializer.deSerializeTaskFromString("a,b"));
     }
 
     @Test
     public void testExceptionIfNotCorrectId() {
-        Assert.assertThrows(IllegalArgumentException.class, () -> TaskSerializer.serializeTaskFromString("a,b,c,d,e"));
+        Assert.assertThrows(IllegalArgumentException.class, () -> TaskSerializer.deSerializeTaskFromString("a,b,c,d,e"));
     }
 }

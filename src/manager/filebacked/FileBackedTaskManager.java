@@ -89,7 +89,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager implements TaskMa
             try (BufferedReader fileReader = new BufferedReader(new FileReader(file))) {
                 while (fileReader.ready()) {
                     String line = fileReader.readLine();
-                    Task task = TaskSerializer.serializeTaskFromString(line);
+                    Task task = TaskSerializer.deSerializeTaskFromString(line);
 
                     if (task instanceof Epic epic) {
                         manager.epics.put(epic.getId(), epic);
