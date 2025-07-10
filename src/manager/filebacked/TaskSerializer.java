@@ -33,7 +33,7 @@ public class TaskSerializer {
 
         if (!type.equals(TaskType.EPIC)) {
             sb.append(",");
-            sb.append(task.getStartTime().toString());
+            sb.append(task.getStartTime().orElse(null));
             sb.append(",");
             sb.append(task.getDuration().toMinutes());
         }
