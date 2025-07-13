@@ -42,4 +42,6 @@ public interface TaskManager {
     void deleteEpicById(long id);
 
     HistoryManager getHistoryManager();
+
+    List<Task> getPrioritizedTasks();
 }

@@ -7,7 +7,13 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public abstract class TaskManagerTest<T extends TaskManager> {
     protected T manager;
@@ -207,6 +213,31 @@ public abstract class TaskManagerTest<T extends TaskManager> {
         history = manager.getHistoryManager().getHistory();
         Assertions.assertEquals(1, history.size());
 
+    }
+
+    @Test
+    void priorityTestOk() {
+        LocalDateTime startTime1 = LocalDateTime.of(2025,7,8, 20,0);
+        LocalDateTime startTime2 = LocalDateTime.of(2025,7,9, 21,0);
+        LocalDateTime startTime3 = LocalDateTime.of(2025,9,9, 21,0);
+        Epic epic = new Epic("epic", "de");
+        long epicId = manager.createEpic(epic);
+        Task task1 = new Task("a", "b", Status.NEW, startTime3, Duration.ofMinutes(30));
+        Subtask task2 = new Subtask("a", "b", Status.NEW, epicId, startTime1, Duration.ofMinutes(30));
+        Task task3 = new Task("a", "b", Status.NEW, startTime2, Duration.ofMinutes(30));
+        manager.createTask(task1);
+        manager.createTask(task2);
+        manager.createTask(task3);
+        Set<Long> tasksExpectedIds = new HashSet<>(Arrays.asList(task2.getId(), task3.getId(), task1.getId()));
+        Set<Long> tasksActualIds = manager.getPrioritizedTasks().stream().map(Task::getId).collect(Collectors.toSet());
+        Assertions.assertEquals(tasksExpectedIds, tasksActualIds);
+        LocalDateTime startTime3changed = LocalDateTime.of(2023,7,8, 20,0);
+        Task task1changed = new Task("a", "b", Status.NEW, startTime3changed, Duration.ofMinutes(30));
+        task1changed.setId(task1.getId());
+        manager.updateTask(task1changed);
+        Set<Long> tasksExpectedIds2 = new HashSet<>(Arrays.asList(task1.getId(), task3.getId(), task2.getId()));
+        Set<Long> tasksActualIds2 = manager.getPrioritizedTasks().stream().map(Task::getId).collect(Collectors.toSet());
+        Assertions.assertEquals(tasksExpectedIds2, tasksActualIds2);
     }
 
 }
