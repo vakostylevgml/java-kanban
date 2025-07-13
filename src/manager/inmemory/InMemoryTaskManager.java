@@ -6,6 +6,7 @@ import model.Epic;
 import model.Subtask;
 import model.Task;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -235,6 +236,25 @@ public class InMemoryTaskManager implements TaskManager {
             epics.remove(id);
             historyManager.remove(id);
         }
+    }
+
+    public boolean isOverlapping(Task task1, Task task2) {
+        if ((task1 == null || task2 == null) || task1.getEndTime().isEmpty() || task2.getEndTime().isEmpty()
+                || task1.getStartTime().isEmpty() || task2.getStartTime().isEmpty()) {
+            return false;
+        }
+        LocalDateTime t1Start = task1.getStartTime().get();
+        LocalDateTime t2Start = task2.getStartTime().get();
+        LocalDateTime t1End = task1.getEndTime().get();
+        LocalDateTime t2End = task2.getEndTime().get();
+
+
+        if (t1End.isAfter(t2End) || t1End.isEqual(t2End)) {
+            return (t1Start.isBefore(t2End) || t1Start.isEqual(t2End));
+        } else {
+            return (t2Start.isBefore(t1End) || t2Start.isEqual(t1End));
+        }
+
     }
 
     private long getTaskId() {

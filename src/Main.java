@@ -4,14 +4,11 @@ import manager.filebacked.FileBackedTaskManager;
 import java.io.File;
 
 /*
-@TODO One list for all?
-@TODO Save duration to file
-@TODO Get all tasks sorted by startTime, O(n)
-@TODO overlap check
+@TODO advanced overlap check
 @TODO replace loops with streams
-@TODO tests
 @TODO Optional
-@TODO advanced overlap
+@TODO check tests
+@TODO delete main
  */
 
 public class Main {
