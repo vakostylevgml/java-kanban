@@ -63,7 +63,7 @@ public class TaskSerializer {
 
             try {
                 startTime = LocalDateTime.parse(split[5]);
-                duration = Duration.parse(split[6]);
+                duration = Duration.ofMinutes(Long.parseLong(split[6]));
             } catch (DateTimeException e) {
                 startTime = null;
             }
@@ -82,7 +82,7 @@ public class TaskSerializer {
 
             try {
                 startTime = LocalDateTime.parse(split[6]);
-                duration = Duration.parse(split[7]);
+                duration = Duration.ofMinutes(Long.parseLong(split[7]));
             } catch (DateTimeException e) {
                 startTime = null;
             }
