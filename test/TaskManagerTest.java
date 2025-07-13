@@ -1,3 +1,4 @@
+import manager.OverlapException;
 import manager.TaskManager;
 import model.Epic;
 import model.Status;
@@ -238,6 +239,39 @@ public abstract class TaskManagerTest<T extends TaskManager> {
         Set<Long> tasksExpectedIds2 = new HashSet<>(Arrays.asList(task1.getId(), task3.getId(), task2.getId()));
         Set<Long> tasksActualIds2 = manager.getPrioritizedTasks().stream().map(Task::getId).collect(Collectors.toSet());
         Assertions.assertEquals(tasksExpectedIds2, tasksActualIds2);
+    }
+
+    @Test
+    public void overlappingTasksTestOk() {
+        LocalDateTime startTask1 = LocalDateTime.of(2025,7,8, 20,0);
+        Duration durationTask1 = Duration.ofMinutes(30);
+        LocalDateTime startTask2 = LocalDateTime.of(2025,7,8, 21,0);
+        Duration durationTask2 = Duration.ofMinutes(60);
+        Task task1 = new Task("task1", "de", Status.DONE, startTask1, durationTask1);
+        Epic epic = new Epic("e", "d");
+        long epicid = manager.createEpic(epic);
+        Subtask subtask2 = new Subtask("subtask1", "de", Status.DONE, epicid,
+                startTask2, durationTask2);
+        long taskId = manager.createTask(task1);
+        long subtaskId = manager.createSubtask(subtask2);
+        Assertions.assertEquals(taskId, manager.findTaskById(taskId).getId());
+        Assertions.assertEquals(subtaskId, manager.findSubTaskById(subtaskId).getId());
+    }
+
+    @Test
+    public void overlappingTasksTestThrowsException() {
+        LocalDateTime startTask1 = LocalDateTime.of(2025,12,8, 20,0);
+        Duration durationTask1 = Duration.ofMinutes(120);
+        LocalDateTime startTask2 = LocalDateTime.of(2025,12,8, 21,0);
+        Duration durationTask2 = Duration.ofMinutes(60);
+        Task task1 = new Task("task1", "de", Status.DONE, startTask1, durationTask1);
+        Epic epic = new Epic("e", "d");
+        long epicid = manager.createEpic(epic);
+        Subtask subtask2 = new Subtask("subtask1", "de", Status.DONE, epicid,
+                startTask2, durationTask2);
+        long taskId = manager.createTask(task1);
+        Assertions.assertEquals(taskId, manager.findTaskById(taskId).getId());
+        Assertions.assertThrows(OverlapException.class, () -> manager.createSubtask(subtask2));
     }
 
 }
