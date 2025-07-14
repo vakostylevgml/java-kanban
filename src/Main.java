@@ -1,5 +1,4 @@
 /*
-@TODO replace loops with streams
 @TODO Optional
 @TODO check tests
 @TODO delete main

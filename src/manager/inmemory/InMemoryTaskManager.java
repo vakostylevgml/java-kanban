@@ -1,7 +1,6 @@
 package manager.inmemory;
 
 import manager.HistoryManager;
-import manager.OverlapException;
 import manager.TaskManager;
 import model.Epic;
 import model.Subtask;
@@ -310,11 +309,13 @@ public class InMemoryTaskManager implements TaskManager {
         }
     }
 
-    protected Set<Integer> getTaskTimeIntervals(Task task) {
+    private Set<Integer> getTaskTimeIntervals(Task task) {
         if (task != null && task.getEndTime().isPresent()) {
-            int startTimeIndex = (int)(Duration.between(START_OF_PERIOD, task.getStartTime().get()).toMinutes()
+            int startTimeIndex = (int)(Duration.between(START_OF_PERIOD,
+                    task.getStartTime().orElseThrow(IllegalArgumentException::new)).toMinutes()
                     / PLANNING_TIME_INTERVAL_MINUTES) + 1;
-            int endTimeIndex = (int)(Duration.between(START_OF_PERIOD, task.getEndTime().get()).toMinutes()
+            int endTimeIndex = (int)(Duration.between(START_OF_PERIOD,
+                    task.getEndTime().orElseThrow(IllegalArgumentException::new)).toMinutes()
                     / PLANNING_TIME_INTERVAL_MINUTES);
             Set<Integer> intervals = new HashSet<>();
 
@@ -327,19 +328,15 @@ public class InMemoryTaskManager implements TaskManager {
         }
     }
 
-    protected void addIntervals(Set<Integer> intervalsToAdd) {
+    private void addIntervals(Set<Integer> intervalsToAdd) {
         if (intervalsToAdd != null && !intervalsToAdd.isEmpty()) {
-            for (Integer i : intervalsToAdd) {
-                intervals.put(i, true);
-            }
+            intervalsToAdd.forEach(i -> intervals.put(i, true));
         }
     }
 
-    protected void removeIntervals(Set<Integer> intervalsToRemove) {
+    private void removeIntervals(Set<Integer> intervalsToRemove) {
         if (intervalsToRemove != null && !intervalsToRemove.isEmpty()) {
-            for (Integer i : intervalsToRemove) {
-                intervals.put(i, false);
-            }
+            intervalsToRemove.forEach(i -> intervals.put(i, false));
         }
     }
 
