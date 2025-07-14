@@ -232,7 +232,7 @@ public abstract class TaskManagerTest<T extends TaskManager> {
         Set<Long> tasksExpectedIds = new HashSet<>(Arrays.asList(task2.getId(), task3.getId(), task1.getId()));
         Set<Long> tasksActualIds = manager.getPrioritizedTasks().stream().map(Task::getId).collect(Collectors.toSet());
         Assertions.assertEquals(tasksExpectedIds, tasksActualIds);
-        LocalDateTime startTime3changed = LocalDateTime.of(2023,7,8, 20,0);
+        LocalDateTime startTime3changed = LocalDateTime.of(2025,1,8, 20,0);
         Task task1changed = new Task("a", "b", Status.NEW, startTime3changed, Duration.ofMinutes(30));
         task1changed.setId(task1.getId());
         manager.updateTask(task1changed);
@@ -254,8 +254,8 @@ public abstract class TaskManagerTest<T extends TaskManager> {
                 startTask2, durationTask2);
         long taskId = manager.createTask(task1);
         long subtaskId = manager.createSubtask(subtask2);
-        Assertions.assertEquals(taskId, manager.findTaskById(taskId).getId());
-        Assertions.assertEquals(subtaskId, manager.findSubTaskById(subtaskId).getId());
+        Assertions.assertEquals(taskId, manager.findTaskById(taskId).get().getId());
+        Assertions.assertEquals(subtaskId, manager.findSubTaskById(subtaskId).get().getId());
     }
 
     @Test
@@ -270,7 +270,7 @@ public abstract class TaskManagerTest<T extends TaskManager> {
         Subtask subtask2 = new Subtask("subtask1", "de", Status.DONE, epicid,
                 startTask2, durationTask2);
         long taskId = manager.createTask(task1);
-        Assertions.assertEquals(taskId, manager.findTaskById(taskId).getId());
+        Assertions.assertEquals(taskId, manager.findTaskById(taskId).get().getId());
         Assertions.assertThrows(OverlapException.class, () -> manager.createSubtask(subtask2));
     }
 

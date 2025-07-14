@@ -51,7 +51,6 @@ class FileBackedTaskManagerTest extends TaskManagerTest<FileBackedTaskManager> {
     @Order(2)
     void testUserScenarioLoadOk() {
         manager = FileBackedTaskManager.loadFromFile(tempFile.toFile());
-        System.out.println(tempFile);
         Assertions.assertEquals(1, manager.findAllTasks().size());
         Assertions.assertEquals(1, manager.findAllEpics().size());
         Assertions.assertEquals(1, manager.findAllSubTasks().size());

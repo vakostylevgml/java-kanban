@@ -9,6 +9,7 @@ import model.Subtask;
 import model.Task;
 
 import java.io.*;
+import java.util.Optional;
 
 public class FileBackedTaskManager extends InMemoryTaskManager implements TaskManager {
     private static String FILENAME;
@@ -40,24 +41,24 @@ public class FileBackedTaskManager extends InMemoryTaskManager implements TaskMa
     }
 
     @Override
-    public Task updateTask(Task task) {
-        Task updatedTask = super.updateTask(task);
+    public Optional<Task> updateTask(Task task) {
+        Task updatedTask = super.updateTask(task).orElseThrow(IllegalArgumentException::new);
         save();
-        return updatedTask;
+        return Optional.of(updatedTask);
     }
 
     @Override
-    public Subtask updateSubtask(Subtask subtask) {
-        Subtask updatedSubtask = super.updateSubtask(subtask);
+    public Optional<Subtask> updateSubtask(Subtask subtask) {
+        Subtask updatedSubtask = super.updateSubtask(subtask).orElseThrow(IllegalArgumentException::new);
         save();
-        return updatedSubtask;
+        return Optional.of(updatedSubtask);
     }
 
     @Override
-    public Epic updateEpic(Epic epic) {
-        Epic updatedEpic = super.updateEpic(epic);
+    public Optional<Epic> updateEpic(Epic epic) {
+        Epic updatedEpic = super.updateEpic(epic).orElseThrow(IllegalArgumentException::new);
         save();
-        return updatedEpic;
+        return Optional.of(updatedEpic);
     }
 
     @Override

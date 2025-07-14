@@ -18,13 +18,12 @@ public class InMemoryTaskManager implements TaskManager {
     protected static final LocalDateTime START_OF_PERIOD = LocalDateTime.of(2025, Month.JANUARY,
             1, 0, 0, 0);
 
-
     protected final Map<Long, Task> tasks;
     protected final Map<Long, Subtask> subtasks;
     protected final Map<Long, Epic> epics;
     protected final TreeSet<Task> sortedTasks;
-    private final HistoryManager historyManager;
     protected final Map<Integer, Boolean> intervals;
+    private final HistoryManager historyManager;
     private long taskId;
 
     public InMemoryTaskManager(HistoryManager historyManager) {
@@ -67,30 +66,33 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public Task findTaskById(long id) {
+    public Optional<Task> findTaskById(long id) {
         Task task = tasks.get(id);
         if (task != null) {
             historyManager.add(task);
+            return Optional.of(task);
         }
-        return task;
+        return Optional.empty();
     }
 
     @Override
-    public Subtask findSubTaskById(long id) {
+    public Optional<Subtask> findSubTaskById(long id) {
         Subtask subtask = subtasks.get(id);
         if (subtask != null) {
             historyManager.add(subtask);
+            return Optional.of(subtask);
         }
-        return subtask;
+        return Optional.empty();
     }
 
     @Override
-    public Epic findEpicById(long id) {
+    public Optional<Epic> findEpicById(long id) {
         Epic epic = epics.get(id);
         if (epic != null) {
             historyManager.add(epic);
+            return Optional.of(epic);
         }
-        return epic;
+        return Optional.empty();
     }
 
     @Override
@@ -107,7 +109,11 @@ public class InMemoryTaskManager implements TaskManager {
         if (!epics.containsKey(epicId)) {
             return List.of();
         }
-        return findEpicById(epicId).getSubtasks();
+        if (findEpicById(epicId).isPresent()) {
+            return findEpicById(epicId).get().getSubtasks();
+        } else {
+            return List.of();
+        }
     }
 
     @Override
@@ -162,9 +168,9 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public Task updateTask(Task task) {
+    public Optional<Task> updateTask(Task task) {
         if (task == null || !tasks.containsKey(task.getId())) {
-            return null;
+            return Optional.empty();
         }
 
         if (task.getStartTime().isPresent()) {
@@ -180,29 +186,28 @@ public class InMemoryTaskManager implements TaskManager {
             sortedTasks.add(task);
             addIntervals(getTaskTimeIntervals(task));
         }
-        return tasks.put(task.getId(), task);
+        return Optional.ofNullable(tasks.put(task.getId(), task));
     }
 
     @Override
-    public Subtask updateSubtask(Subtask subtask) {
+    public Optional<Subtask> updateSubtask(Subtask subtask) {
         if (subtask == null || !subtasks.containsKey(subtask.getId())) {
-            return null;
+            return Optional.empty();
         }
 
         Subtask oldSubtask = subtasks.get(subtask.getId());
         if (oldSubtask.getEpicId() != subtask.getEpicId()) {
             if (!epics.containsKey(subtask.getEpicId())) {
-                return null;
+                return Optional.empty();
             }
-            Epic oldEpic = findEpicById(oldSubtask.getEpicId());
+            Epic oldEpic = findEpicById(oldSubtask.getEpicId()).orElseThrow(IllegalArgumentException::new);
             oldEpic.removeSubtask(subtask);
-            Epic newEpic = findEpicById(subtask.getEpicId());
+            Epic newEpic = findEpicById(subtask.getEpicId()).orElseThrow(IllegalArgumentException::new);
             newEpic.addSubtask(subtask);
         } else {
-            Epic epic = findEpicById(subtask.getEpicId());
+            Epic epic = findEpicById(subtask.getEpicId()).orElseThrow(IllegalArgumentException::new);
             epic.updateSubtask(subtask);
         }
-
 
         if (subtask.getStartTime().isPresent()) {
             removeIntervals(getTaskTimeIntervals(oldSubtask));
@@ -217,13 +222,13 @@ public class InMemoryTaskManager implements TaskManager {
             addIntervals(getTaskTimeIntervals(subtask));
         }
 
-        return subtasks.put(subtask.getId(), subtask);
+        return Optional.ofNullable(subtasks.put(subtask.getId(), subtask));
     }
 
     @Override
-    public Epic updateEpic(Epic epic) {
+    public Optional<Epic> updateEpic(Epic epic) {
         if (epic == null || !epics.containsKey(epic.getId())) {
-            return null;
+            return Optional.empty();
         }
 
         Set<Long> newSubtaskIds = epic.getSubtasks().stream()
@@ -231,11 +236,11 @@ public class InMemoryTaskManager implements TaskManager {
                 .collect(Collectors.toSet());
 
         if (!subtasks.keySet().containsAll(newSubtaskIds)) {
-            return null;
+            return Optional.empty();
         }
 
         epics.put(epic.getId(), epic);
-        return epic;
+        return Optional.of(epic);
     }
 
     @Override
@@ -251,10 +256,8 @@ public class InMemoryTaskManager implements TaskManager {
     public void deleteSubtaskById(long id) {
         if (subtasks.containsKey(id)) {
             Subtask subtask = subtasks.get(id);
-            Epic epic = findEpicById(subtask.getEpicId());
-            if (epic != null) {
-                epic.removeSubtask(subtask);
-            }
+            Epic epic = findEpicById(subtask.getEpicId()).orElseThrow(IllegalArgumentException::new);
+            epic.removeSubtask(subtask);
             removeIntervals(getTaskTimeIntervals(subtask));
             subtasks.remove(id);
             historyManager.remove(id);
@@ -313,10 +316,10 @@ public class InMemoryTaskManager implements TaskManager {
 
     private Set<Integer> getTaskTimeIntervals(Task task) {
         if (task != null && task.getEndTime().isPresent()) {
-            int startTimeIndex = (int)(Duration.between(START_OF_PERIOD,
+            int startTimeIndex = (int) (Duration.between(START_OF_PERIOD,
                     task.getStartTime().orElseThrow(IllegalArgumentException::new)).toMinutes()
                     / PLANNING_TIME_INTERVAL_MINUTES) + 1;
-            int endTimeIndex = (int)(Duration.between(START_OF_PERIOD,
+            int endTimeIndex = (int) (Duration.between(START_OF_PERIOD,
                     task.getEndTime().orElseThrow(IllegalArgumentException::new)).toMinutes()
                     / PLANNING_TIME_INTERVAL_MINUTES);
             Set<Integer> intervals = new HashSet<>();
