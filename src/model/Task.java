@@ -46,7 +46,8 @@ public class Task {
 
     @Override
     public String toString() {
-        return "[TaskId = " + getId() + ", title = " + getTitle() + ", status = " + status + "]";
+        return "[TaskId = " + getId() + ", title = " + getTitle() + ", status = " + status + ", start = "
+                + startTime + ", duration = " + durationInMinutes + "]";
     }
 
     public long getId() {
