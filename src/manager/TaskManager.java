@@ -5,6 +5,7 @@ import model.Subtask;
 import model.Task;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface TaskManager {
     List<Task> findAllTasks();
@@ -13,11 +14,11 @@ public interface TaskManager {
 
     List<Epic> findAllEpics();
 
-    Task findTaskById(long id);
+    Optional<Task> findTaskById(long id);
 
-    Subtask findSubTaskById(long id);
+    Optional<Subtask> findSubTaskById(long id);
 
-    Epic findEpicById(long id);
+    Optional<Epic> findEpicById(long id);
 
     List<Subtask> findAllSubtasksByEpic(Epic epic);
 
@@ -29,11 +30,11 @@ public interface TaskManager {
 
     long createEpic(Epic epic);
 
-    Task updateTask(Task task);
+    Optional<Task> updateTask(Task task);
 
-    Subtask updateSubtask(Subtask subtask);
+    Optional<Subtask> updateSubtask(Subtask subtask);
 
-    Epic updateEpic(Epic epic);
+    Optional<Epic> updateEpic(Epic epic);
 
     void deleteTaskById(long id);
 
@@ -42,4 +43,8 @@ public interface TaskManager {
     void deleteEpicById(long id);
 
     HistoryManager getHistoryManager();
+
+    List<Task> getPrioritizedTasks();
+
+    boolean isOverlapWithExisting(Task task);
 }

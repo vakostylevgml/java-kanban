@@ -5,6 +5,10 @@ import model.Subtask;
 import model.Task;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+
+import java.time.Duration;
+import java.time.LocalDateTime;
 
 public class TaskSerializerTest {
 
@@ -13,7 +17,7 @@ public class TaskSerializerTest {
         Task created =  new Task("title", "desc", Status.NEW);
         created.setId(1);
         String createdString = TaskSerializer.serrializeToString(created);
-        Task restored =  TaskSerializer.serializeTaskFromString(createdString);
+        Task restored =  TaskSerializer.deSerializeTaskFromString(createdString);
         Assert.assertEquals(created.getId(), restored.getId());
         Assert.assertEquals(created.getTitle(), restored.getTitle());
         Assert.assertEquals(created.getDescription(), restored.getDescription());
@@ -25,7 +29,7 @@ public class TaskSerializerTest {
         Subtask created =  new Subtask("title", "desc", Status.NEW, 888);
         created.setId(1);
         String createdString = TaskSerializer.serrializeToString(created);
-        Subtask restored =  (Subtask) TaskSerializer.serializeTaskFromString(createdString);
+        Subtask restored =  (Subtask) TaskSerializer.deSerializeTaskFromString(createdString);
         Assert.assertEquals(created.getId(), restored.getId());
         Assert.assertEquals(created.getTitle(), restored.getTitle());
         Assert.assertEquals(created.getDescription(), restored.getDescription());
@@ -39,7 +43,7 @@ public class TaskSerializerTest {
         Epic created =  new Epic("title", "desc");
         created.setId(1);
         String createdString = TaskSerializer.serrializeToString(created);
-        Epic restored =  (Epic) TaskSerializer.serializeTaskFromString(createdString);
+        Epic restored =  (Epic) TaskSerializer.deSerializeTaskFromString(createdString);
         Assert.assertEquals(created.getId(), restored.getId());
         Assert.assertEquals(created.getTitle(), restored.getTitle());
         Assert.assertEquals(created.getDescription(), restored.getDescription());
@@ -49,16 +53,102 @@ public class TaskSerializerTest {
 
     @Test
     public void testExceptionIfEmpty() {
-        Assert.assertThrows(IllegalArgumentException.class, () -> TaskSerializer.serializeTaskFromString(""));
+        Assert.assertThrows(IllegalArgumentException.class, () -> TaskSerializer.deSerializeTaskFromString(""));
     }
 
     @Test
     public void testExceptionIfNotEnough() {
-        Assert.assertThrows(IllegalArgumentException.class, () -> TaskSerializer.serializeTaskFromString("a,b"));
+        Assert.assertThrows(IllegalArgumentException.class, () -> TaskSerializer.deSerializeTaskFromString("a,b"));
     }
 
     @Test
     public void testExceptionIfNotCorrectId() {
-        Assert.assertThrows(IllegalArgumentException.class, () -> TaskSerializer.serializeTaskFromString("a,b,c,d,e"));
+        Assert.assertThrows(IllegalArgumentException.class, () -> TaskSerializer.deSerializeTaskFromString("a,b,c,d,e"));
+    }
+
+    @Test
+    public void testOkTaskWithStartAndDuration() {
+        LocalDateTime start = LocalDateTime.of(2025,7,8, 20,0);
+        Duration duration = Duration.ofMinutes(30);
+
+        Task created =  new Task("title", "desc", Status.NEW, start, duration);
+        created.setId(1);
+        String createdString = TaskSerializer.serrializeToString(created);
+        Task restored =  TaskSerializer.deSerializeTaskFromString(createdString);
+        Assert.assertTrue(restored.getStartTime().isPresent());
+        Assert.assertTrue(restored.getEndTime().isPresent());
+        Assertions.assertTrue(restored.getDuration().isPositive());
+
+        Assert.assertEquals(created.getStartTime().get(), restored.getStartTime().get());
+        Assert.assertEquals(created.getEndTime().get(), restored.getEndTime().get());
+        Assert.assertEquals(created.getDuration(), restored.getDuration());
+
+    }
+
+    @Test
+    public void testOkSubTaskWithStartAndDuration() {
+        LocalDateTime start = LocalDateTime.of(2025,7,8, 20,0);
+        Duration duration = Duration.ofMinutes(30);
+
+        Subtask created =  new Subtask("title", "desc", Status.NEW, 888L, start, duration);
+        created.setId(1);
+        String createdString = TaskSerializer.serrializeToString(created);
+        Task restored =  TaskSerializer.deSerializeTaskFromString(createdString);
+        Assert.assertTrue(restored.getStartTime().isPresent());
+        Assert.assertTrue(restored.getEndTime().isPresent());
+        Assertions.assertTrue(restored.getDuration().isPositive());
+
+        Assert.assertEquals(created.getStartTime().get(), restored.getStartTime().get());
+        Assert.assertEquals(created.getEndTime().get(), restored.getEndTime().get());
+        Assert.assertEquals(created.getDuration(), restored.getDuration());
+
+    }
+
+    @Test
+    public void testOkTaskWithNoStart() {
+        Duration duration = Duration.ofMinutes(30);
+        Task created =  new Task("title", "desc", Status.NEW, null, duration);
+        created.setId(1);
+        String createdString = TaskSerializer.serrializeToString(created);
+        Task restored =  TaskSerializer.deSerializeTaskFromString(createdString);
+        Assert.assertTrue(restored.getStartTime().isEmpty());
+        Assert.assertTrue(restored.getEndTime().isEmpty());
+        Assertions.assertTrue(restored.getDuration().isZero());
+    }
+
+    @Test
+    public void testOkTaskWithNoDuration() {
+        LocalDateTime start = LocalDateTime.of(2025,7,8, 20,0);
+        Task created =  new Task("title", "desc", Status.NEW, start, null);
+        created.setId(1);
+        String createdString = TaskSerializer.serrializeToString(created);
+        Task restored =  TaskSerializer.deSerializeTaskFromString(createdString);
+        Assert.assertTrue(restored.getStartTime().isEmpty());
+        Assert.assertTrue(restored.getEndTime().isEmpty());
+        Assertions.assertTrue(restored.getDuration().isZero());
+    }
+
+    @Test
+    public void testOkSubTaskWithNoStart() {
+        Duration duration = Duration.ofMinutes(30);
+        Subtask created =  new Subtask("title", "desc", Status.NEW, 888L, null, duration);
+        created.setId(1);
+        String createdString = TaskSerializer.serrializeToString(created);
+        Task restored =  TaskSerializer.deSerializeTaskFromString(createdString);
+        Assert.assertTrue(restored.getStartTime().isEmpty());
+        Assert.assertTrue(restored.getEndTime().isEmpty());
+        Assertions.assertTrue(restored.getDuration().isZero());
+    }
+
+    @Test
+    public void testOkSubTaskWithNoDuration() {
+        LocalDateTime start = LocalDateTime.of(2025,7,8, 20,0);
+        Subtask created =  new Subtask("title", "desc", Status.NEW, 888L, start, null);
+        created.setId(1);
+        String createdString = TaskSerializer.serrializeToString(created);
+        Task restored =  TaskSerializer.deSerializeTaskFromString(createdString);
+        Assert.assertTrue(restored.getStartTime().isEmpty());
+        Assert.assertTrue(restored.getEndTime().isEmpty());
+        Assertions.assertTrue(restored.getDuration().isZero());
     }
 }

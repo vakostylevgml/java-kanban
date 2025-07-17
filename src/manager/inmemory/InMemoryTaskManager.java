@@ -2,29 +2,52 @@ package manager.inmemory;
 
 import manager.HistoryManager;
 import manager.TaskManager;
-import model.*;
+import model.Epic;
+import model.Subtask;
+import model.Task;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class InMemoryTaskManager implements TaskManager {
-    private long taskId;
+    protected static final int PLANNING_TIME_DAYS = 365;
+    protected static final int PLANNING_TIME_INTERVAL_MINUTES = 15;
+    protected static final LocalDateTime START_OF_PERIOD = LocalDateTime.of(2025, Month.JANUARY,
+            1, 0, 0, 0);
+
     protected final Map<Long, Task> tasks;
     protected final Map<Long, Subtask> subtasks;
     protected final Map<Long, Epic> epics;
-
+    protected final TreeSet<Task> sortedTasks;
+    protected final Map<Integer, Boolean> intervals;
     private final HistoryManager historyManager;
+    private long taskId;
 
     public InMemoryTaskManager(HistoryManager historyManager) {
         tasks = new HashMap<>();
         subtasks = new HashMap<>();
         epics = new HashMap<>();
         this.historyManager = historyManager;
+        sortedTasks = new TreeSet<>(Comparator
+                .comparing(t -> t.getStartTime().orElseThrow(IllegalArgumentException::new)));
+        intervals = new HashMap<>();
+
+        for (int i = 0; i < (PLANNING_TIME_DAYS * 24 * 60) / PLANNING_TIME_INTERVAL_MINUTES; i++) {
+            intervals.put(i, false);
+        }
     }
 
     @Override
     public HistoryManager getHistoryManager() {
         return historyManager;
+    }
+
+    @Override
+    public List<Task> getPrioritizedTasks() {
+        return sortedTasks.stream().toList();
     }
 
     @Override
@@ -43,30 +66,33 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public Task findTaskById(long id) {
+    public Optional<Task> findTaskById(long id) {
         Task task = tasks.get(id);
         if (task != null) {
             historyManager.add(task);
+            return Optional.of(task);
         }
-        return task;
+        return Optional.empty();
     }
 
     @Override
-    public Subtask findSubTaskById(long id) {
+    public Optional<Subtask> findSubTaskById(long id) {
         Subtask subtask = subtasks.get(id);
         if (subtask != null) {
             historyManager.add(subtask);
+            return Optional.of(subtask);
         }
-        return subtask;
+        return Optional.empty();
     }
 
     @Override
-    public Epic findEpicById(long id) {
+    public Optional<Epic> findEpicById(long id) {
         Epic epic = epics.get(id);
         if (epic != null) {
             historyManager.add(epic);
+            return Optional.of(epic);
         }
-        return epic;
+        return Optional.empty();
     }
 
     @Override
@@ -83,7 +109,11 @@ public class InMemoryTaskManager implements TaskManager {
         if (!epics.containsKey(epicId)) {
             return List.of();
         }
-        return findEpicById(epicId).getSubtasks();
+        if (findEpicById(epicId).isPresent()) {
+            return findEpicById(epicId).get().getSubtasks();
+        } else {
+            return List.of();
+        }
     }
 
     @Override
@@ -91,8 +121,17 @@ public class InMemoryTaskManager implements TaskManager {
         if (task == null) {
             return -1;
         }
+
+        if (isOverlapWithExisting(task)) {
+            throw new OverlapException("Task overlaps with existing task");
+        }
+
         task.setId(getTaskId());
         tasks.put(task.getId(), task);
+        if (task.getStartTime().isPresent()) {
+            sortedTasks.add(task);
+            addIntervals(getTaskTimeIntervals(task));
+        }
         return task.getId();
     }
 
@@ -102,10 +141,18 @@ public class InMemoryTaskManager implements TaskManager {
             return -1;
         }
 
+        if (isOverlapWithExisting(subtask)) {
+            throw new OverlapException("Task overlaps with existing task");
+        }
+
         Epic epic = epics.get(subtask.getEpicId());
         subtask.setId(getTaskId());
         subtasks.put(subtask.getId(), subtask);
         epic.addSubtask(subtask);
+        if (subtask.getStartTime().isPresent()) {
+            sortedTasks.add(subtask);
+            addIntervals(getTaskTimeIntervals(subtask));
+        }
         return subtask.getId();
     }
 
@@ -121,40 +168,67 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public Task updateTask(Task task) {
+    public Optional<Task> updateTask(Task task) {
         if (task == null || !tasks.containsKey(task.getId())) {
-            return null;
+            return Optional.empty();
         }
 
-        return tasks.put(task.getId(), task);
+        if (task.getStartTime().isPresent()) {
+            Task oldTask = tasks.get(task.getId());
+            removeIntervals(getTaskTimeIntervals(oldTask));
+
+            if (isOverlapWithExisting(task)) {
+                addIntervals(getTaskTimeIntervals(oldTask)); //roll back
+                throw new OverlapException("Task overlaps with existing task");
+            }
+
+            sortedTasks.remove(oldTask);
+            sortedTasks.add(task);
+            addIntervals(getTaskTimeIntervals(task));
+        }
+        return Optional.ofNullable(tasks.put(task.getId(), task));
     }
 
     @Override
-    public Subtask updateSubtask(Subtask subtask) {
+    public Optional<Subtask> updateSubtask(Subtask subtask) {
         if (subtask == null || !subtasks.containsKey(subtask.getId())) {
-            return null;
+            return Optional.empty();
         }
 
         Subtask oldSubtask = subtasks.get(subtask.getId());
         if (oldSubtask.getEpicId() != subtask.getEpicId()) {
             if (!epics.containsKey(subtask.getEpicId())) {
-                return null;
+                return Optional.empty();
             }
-            Epic oldEpic = findEpicById(oldSubtask.getEpicId());
+            Epic oldEpic = findEpicById(oldSubtask.getEpicId()).orElseThrow(IllegalArgumentException::new);
             oldEpic.removeSubtask(subtask);
-            Epic newEpic = findEpicById(subtask.getEpicId());
+            Epic newEpic = findEpicById(subtask.getEpicId()).orElseThrow(IllegalArgumentException::new);
             newEpic.addSubtask(subtask);
         } else {
-            Epic epic = findEpicById(subtask.getEpicId());
+            Epic epic = findEpicById(subtask.getEpicId()).orElseThrow(IllegalArgumentException::new);
             epic.updateSubtask(subtask);
         }
-        return subtasks.put(subtask.getId(), subtask);
+
+        if (subtask.getStartTime().isPresent()) {
+            removeIntervals(getTaskTimeIntervals(oldSubtask));
+
+            if (isOverlapWithExisting(subtask)) {
+                addIntervals(getTaskTimeIntervals(oldSubtask)); //roll back
+                throw new OverlapException("Task overlaps with existing task");
+            }
+
+            sortedTasks.remove(oldSubtask);
+            sortedTasks.add(subtask);
+            addIntervals(getTaskTimeIntervals(subtask));
+        }
+
+        return Optional.ofNullable(subtasks.put(subtask.getId(), subtask));
     }
 
     @Override
-    public Epic updateEpic(Epic epic) {
+    public Optional<Epic> updateEpic(Epic epic) {
         if (epic == null || !epics.containsKey(epic.getId())) {
-            return null;
+            return Optional.empty();
         }
 
         Set<Long> newSubtaskIds = epic.getSubtasks().stream()
@@ -162,15 +236,18 @@ public class InMemoryTaskManager implements TaskManager {
                 .collect(Collectors.toSet());
 
         if (!subtasks.keySet().containsAll(newSubtaskIds)) {
-            return null;
+            return Optional.empty();
         }
 
         epics.put(epic.getId(), epic);
-        return epic;
+        return Optional.of(epic);
     }
 
     @Override
     public void deleteTaskById(long id) {
+        Task task = tasks.get(id);
+        removeIntervals(getTaskTimeIntervals(task));
+        sortedTasks.remove(task);
         tasks.remove(id);
         historyManager.remove(id);
     }
@@ -179,12 +256,12 @@ public class InMemoryTaskManager implements TaskManager {
     public void deleteSubtaskById(long id) {
         if (subtasks.containsKey(id)) {
             Subtask subtask = subtasks.get(id);
-            Epic epic = findEpicById(subtask.getEpicId());
-            if (epic != null) {
-                epic.removeSubtask(subtask);
-            }
+            Epic epic = findEpicById(subtask.getEpicId()).orElseThrow(IllegalArgumentException::new);
+            epic.removeSubtask(subtask);
+            removeIntervals(getTaskTimeIntervals(subtask));
             subtasks.remove(id);
             historyManager.remove(id);
+            sortedTasks.remove(subtask);
         }
     }
 
@@ -198,11 +275,73 @@ public class InMemoryTaskManager implements TaskManager {
                 if (entry.getValue().getEpicId() == id) {
                     iterator.remove();
                     historyManager.remove(entry.getValue().getId());
+                    Subtask subtask = entry.getValue();
+                    removeIntervals(getTaskTimeIntervals(subtask));
+                    sortedTasks.remove(subtask);
                 }
             }
 
             epics.remove(id);
             historyManager.remove(id);
+        }
+    }
+
+    @Override
+    public boolean isOverlapWithExisting(Task task) {
+        Set<Integer> intervalsOfTask = getTaskTimeIntervals(task);
+        for (Integer i : intervalsOfTask) {
+            if (intervals.get(i).equals(true)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean isOverlapping(Task task1, Task task2) {
+        if ((task1 == null || task2 == null) || task1.getEndTime().isEmpty() || task2.getEndTime().isEmpty()
+                || task1.getStartTime().isEmpty() || task2.getStartTime().isEmpty()) {
+            return false;
+        }
+        LocalDateTime t1Start = task1.getStartTime().get();
+        LocalDateTime t2Start = task2.getStartTime().get();
+        LocalDateTime t1End = task1.getEndTime().get();
+        LocalDateTime t2End = task2.getEndTime().get();
+
+        if (t1End.isAfter(t2End) || t1End.isEqual(t2End)) {
+            return (t1Start.isBefore(t2End) || t1Start.isEqual(t2End));
+        } else {
+            return (t2Start.isBefore(t1End) || t2Start.isEqual(t1End));
+        }
+    }
+
+    private Set<Integer> getTaskTimeIntervals(Task task) {
+        if (task != null && task.getEndTime().isPresent()) {
+            int startTimeIndex = (int) (Duration.between(START_OF_PERIOD,
+                    task.getStartTime().orElseThrow(IllegalArgumentException::new)).toMinutes()
+                    / PLANNING_TIME_INTERVAL_MINUTES) + 1;
+            int endTimeIndex = (int) (Duration.between(START_OF_PERIOD,
+                    task.getEndTime().orElseThrow(IllegalArgumentException::new)).toMinutes()
+                    / PLANNING_TIME_INTERVAL_MINUTES);
+            Set<Integer> intervals = new HashSet<>();
+
+            for (int i = startTimeIndex; i <= endTimeIndex; i++) {
+                intervals.add(i);
+            }
+            return intervals;
+        } else {
+            return new HashSet<>();
+        }
+    }
+
+    private void addIntervals(Set<Integer> intervalsToAdd) {
+        if (intervalsToAdd != null && !intervalsToAdd.isEmpty()) {
+            intervalsToAdd.forEach(i -> intervals.put(i, true));
+        }
+    }
+
+    private void removeIntervals(Set<Integer> intervalsToRemove) {
+        if (intervalsToRemove != null && !intervalsToRemove.isEmpty()) {
+            intervalsToRemove.forEach(i -> intervals.put(i, false));
         }
     }
 

@@ -2,6 +2,10 @@ package manager.filebacked;
 
 import model.*;
 
+import java.time.DateTimeException;
+import java.time.Duration;
+import java.time.LocalDateTime;
+
 public class TaskSerializer {
     public static String serrializeToString(Task task) {
         TaskType type = switch (task) {
@@ -26,17 +30,24 @@ public class TaskSerializer {
             Subtask subtask = (Subtask) task;
             sb.append(subtask.getEpicId());
         }
+
+        if (!type.equals(TaskType.EPIC)) {
+            sb.append(",");
+            sb.append(task.getStartTime().orElse(null));
+            sb.append(",");
+            sb.append(task.getDuration().toMinutes());
+        }
         return sb.toString();
     }
 
-    public static Task serializeTaskFromString(String stringFromFile) throws IllegalArgumentException, ArithmeticException {
+    public static Task deSerializeTaskFromString(String stringFromFile) throws TaskFileSerizalizationException {
         if (stringFromFile == null || stringFromFile.isBlank()) {
             throw new IllegalArgumentException("Task string is null or blank");
         }
 
         String[] split = stringFromFile.split(",");
         if (split.length < 5) {
-            throw new IllegalArgumentException("Task string is invalid. Required at least 5 words, got " + split.length);
+            throw new TaskFileSerizalizationException("Task string is invalid. Required at least 5 words, got " + split.length);
         }
 
         long id = Long.parseLong(split[0]);
@@ -46,25 +57,54 @@ public class TaskSerializer {
         Status status = Status.valueOf(split[3]);
         String description = split[4];
 
-        return switch (type) {
-            case TASK -> {
-                Task task = new Task(title, description, status);
-                task.setId(id);
-                yield  task;
+        if (type.equals(TaskType.TASK)) {
+            LocalDateTime startTime;
+            Duration duration = Duration.ZERO;
+
+            try {
+                startTime = LocalDateTime.parse(split[5]);
+                duration = Duration.ofMinutes(Long.parseLong(split[6]));
+            } catch (DateTimeException e) {
+                startTime = null;
             }
 
-            case SUBTASK -> {
-                long epicId = Long.parseLong(split[5]);
-                Subtask subtask = new Subtask(title, description, status, epicId);
-                subtask.setId(id);
-                yield  subtask;
+            Task task;
+            if (startTime == null) {
+                task = new Task(title, description, status);
+            } else {
+                task = new Task(title, description, status, startTime, duration);
             }
-            case EPIC -> {
-                Epic epic = new Epic(title, description);
-                epic.setId(id);
-                yield  epic;
-            }
-        };
+            task.setId(id);
+            return task;
+        } else if (type.equals(TaskType.SUBTASK)) {
+            LocalDateTime startTime;
+            Duration duration = Duration.ZERO;
 
+            try {
+                startTime = LocalDateTime.parse(split[6]);
+                duration = Duration.ofMinutes(Long.parseLong(split[7]));
+            } catch (DateTimeException e) {
+                startTime = null;
+            }
+
+            long epicId;
+            try {
+                epicId = Long.parseLong(split[5]);
+            } catch (NumberFormatException e) {
+                throw new TaskFileSerizalizationException("Invalid epic id: " + split[5]);
+            }
+            Subtask subtask;
+            if (startTime == null) {
+                subtask = new Subtask(title, description, status, epicId);
+            } else {
+                subtask = new Subtask(title, description, status, epicId, startTime, duration);
+            }
+            subtask.setId(id);
+            return subtask;
+        } else {
+            Epic epic = new Epic(title, description);
+            epic.setId(id);
+            return epic;
+        }
     }
 }
