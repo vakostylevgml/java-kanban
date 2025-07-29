@@ -20,4 +20,12 @@ public class BaseHttpHandler {
     protected void sendHasOverlaps(HttpExchange h) throws IOException {
 
     }
+
+    protected void sendError(HttpExchange h, String text) throws IOException {
+        byte[] resp = text.getBytes(StandardCharsets.UTF_8);
+        h.getResponseHeaders().add("Content-Type", "application/json;charset=utf-8");
+        h.sendResponseHeaders(400, resp.length);
+        h.getResponseBody().write(resp);
+        h.close();
+    }
 } 

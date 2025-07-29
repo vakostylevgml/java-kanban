@@ -4,6 +4,8 @@ import com.sun.net.httpserver.HttpServer;
 import manager.Managers;
 import manager.TaskManager;
 import manager.httpapi.handler.TaskHandler;
+import model.Status;
+import model.Task;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -20,6 +22,10 @@ public class HttpTaskServer {
     public static void main(String[] args) {
         HttpTaskServer httpTaskServer = new HttpTaskServer(Managers.getDefault());
         try {
+            Task task = new Task("a", "b", Status.NEW);
+            Task task2 = new Task("a2", "b2", Status.IN_PROGRESS);
+            httpTaskServer.manager.createTask(task);
+            httpTaskServer.manager.createTask(task2);
             httpTaskServer.startServer();
         } catch (IOException e) {
             e.printStackTrace();
