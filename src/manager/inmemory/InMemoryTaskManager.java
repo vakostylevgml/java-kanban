@@ -24,7 +24,7 @@ public class InMemoryTaskManager implements TaskManager {
     protected final TreeSet<Task> sortedTasks;
     protected final Map<Integer, Boolean> intervals;
     private final HistoryManager historyManager;
-    private long taskId;
+    private long taskId = 1;
 
     public InMemoryTaskManager(HistoryManager historyManager) {
         tasks = new HashMap<>();
