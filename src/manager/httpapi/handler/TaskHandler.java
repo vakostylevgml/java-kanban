@@ -20,30 +20,40 @@ public class TaskHandler extends BaseHttpHandler implements HttpHandler {
         super(taskManager, gson);
     }
 
-    @Override
-    public void handle(HttpExchange exchange) throws IOException {
-        String method = exchange.getRequestMethod();
-        try {
-            switch (method) {
-                case "GET":
-                    handleGet(exchange);
-                    break;
-                case "POST":
-                    handlePost(exchange);
-                    break;
-                case "DELETE":
-                    handleDelete(exchange);
-                default:
-                    throw new UnsupportedOperationException(method + " method not supported");
-            }
-        } catch (OverlapException e) {
-            sendHasOverlaps(exchange);
-        } catch (Exception e) {
-            sendError(exchange, e.getMessage());
+    private static Task getTask(Task rawTask) {
+        Duration duration = rawTask.getDuration() != null ? rawTask.getDuration() : null;
+        LocalDateTime start = null;
+        if (duration != null && rawTask.getStartTime().isPresent()) {
+            start = rawTask.getStartTime().get();
         }
+        Task task;
+        if (duration != null && start != null) {
+            task = new Task(rawTask.getTitle(), rawTask.getDescription(), rawTask.getStatus(), start, duration);
+        } else {
+            task = new Task(rawTask.getTitle(), rawTask.getDescription(), rawTask.getStatus());
+        }
+        return task;
     }
 
-    private void handleGet(HttpExchange exchange) throws IOException, IllegalArgumentException {
+    @Override
+    public void handle(HttpExchange exchange) throws IOException, UnsupportedOperationException {
+        String method = exchange.getRequestMethod();
+        switch (method) {
+            case "GET":
+                handleGet(exchange);
+                break;
+            case "POST":
+                handlePost(exchange);
+                break;
+            case "DELETE":
+                handleDelete(exchange);
+            default:
+                throw new UnsupportedOperationException(method + " method not supported");
+        }
+
+    }
+
+    private void handleGet(HttpExchange exchange) throws IOException {
         String[] pathParts = exchange.getRequestURI().getPath().split("/");
         if (pathParts.length == 2) {
             String tasks = gson.toJson(taskManager.findAllTasks());
@@ -58,28 +68,35 @@ public class TaskHandler extends BaseHttpHandler implements HttpHandler {
                     sendNotFound(exchange, "Task with id " + id + " not found");
                 }
             } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("Invalid task id " + pathParts[2]);
+                sendError(exchange, "Invalid task id " + pathParts[2]);
             }
         } else {
-            throw new IllegalArgumentException("Path not recognized: " + exchange.getRequestURI().getPath());
+            sendError(exchange, "Path not recognized: " + exchange.getRequestURI().getPath());
         }
     }
 
-    private void handlePost(HttpExchange exchange) throws IOException, OverlapException, JsonSyntaxException {
+    private void handlePost(HttpExchange exchange) throws IOException {
         InputStream inputStream = exchange.getRequestBody();
         String body = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-        Task rawTask = gson.fromJson(body, Task.class);
-        Task task = getTask(rawTask);
-        if (rawTask.getId() <= 0) {
-            taskManager.createTask(task);
-        } else {
-            task.setId(rawTask.getId());
-            taskManager.updateTask(task);
+
+        try {
+            Task rawTask = gson.fromJson(body, Task.class);
+            Task task = getTask(rawTask);
+            if (rawTask.getId() <= 0) {
+                taskManager.createTask(task);
+            } else {
+                task.setId(rawTask.getId());
+                taskManager.updateTask(task);
+            }
+            sendCreated(exchange);
+        } catch (OverlapException e) {
+            sendHasOverlaps(exchange);
+        } catch (JsonSyntaxException e) {
+            sendError(exchange, "Invalid task json");
         }
-        sendCreated(exchange);
     }
 
-    private void handleDelete(HttpExchange exchange) throws IOException, IllegalArgumentException {
+    private void handleDelete(HttpExchange exchange) throws IOException {
         String[] pathParts = exchange.getRequestURI().getPath().split("/");
         if (pathParts.length == 3) {
             try {
@@ -88,26 +105,11 @@ public class TaskHandler extends BaseHttpHandler implements HttpHandler {
                 task.ifPresent(value -> taskManager.deleteTaskById(value.getId()));
                 sendText(exchange, "Task with id " + id + " deleted");
             } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("Invalid task id " + pathParts[2]);
+                sendError(exchange, "Invalid task id " + pathParts[2]);
             }
         } else {
-            throw new IllegalArgumentException("Path not recognized: " + exchange.getRequestURI().getPath());
+            sendError(exchange, "Path not recognized: " + exchange.getRequestURI().getPath());
         }
-    }
-
-    private static Task getTask(Task rawTask) {
-        Duration duration = rawTask.getDuration() != null ? rawTask.getDuration() : null;
-        LocalDateTime start = null;
-        if (duration != null && rawTask.getStartTime().isPresent()) {
-            start = rawTask.getStartTime().get();
-        }
-        Task task;
-        if (duration != null && start != null) {
-            task = new Task(rawTask.getTitle(), rawTask.getDescription(), rawTask.getStatus(), start, duration);
-        } else {
-            task = new Task(rawTask.getTitle(), rawTask.getDescription(), rawTask.getStatus());
-        }
-        return task;
     }
 
 }
