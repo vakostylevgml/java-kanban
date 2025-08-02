@@ -6,6 +6,7 @@ import com.sun.net.httpserver.HttpServer;
 import manager.Managers;
 import manager.httpapi.adapter.DurationTypeAdapter;
 import manager.httpapi.adapter.LocalDateTimeTypeAdapter;
+import manager.httpapi.handler.SubtaskHandler;
 import manager.httpapi.handler.TaskHandler;
 import manager.inmemory.InMemoryTaskManager;
 import model.Status;
@@ -55,9 +56,9 @@ public class HttpTaskServer {
     }
 
     public void startServer() throws IOException {
-
         httpServer = HttpServer.create(new InetSocketAddress(PORT), 0);
         httpServer.createContext("/tasks", new TaskHandler(manager, gson));
+        httpServer.createContext("/subtasks", new SubtaskHandler(manager, gson));
         httpServer.start();
     }
 }
