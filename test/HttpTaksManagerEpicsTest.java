@@ -142,5 +142,6 @@ public class HttpTaksManagerEpicsTest {
         JsonArray array =  jsonElement.getAsJsonArray();
         Assertions.assertNotNull(array);
         Assertions.assertEquals(2, array.size());
+
     }
 }

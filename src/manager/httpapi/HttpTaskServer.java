@@ -6,20 +6,12 @@ import com.sun.net.httpserver.HttpServer;
 import manager.TaskManager;
 import manager.httpapi.adapter.DurationTypeAdapter;
 import manager.httpapi.adapter.LocalDateTimeTypeAdapter;
-import manager.httpapi.handler.EpicHandler;
-import manager.httpapi.handler.SubtaskHandler;
-import manager.httpapi.handler.TaskHandler;
+import manager.httpapi.handler.*;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.time.LocalDateTime;
-
-/*
-@TODO epics
-@TODO history
-@TODO prioritized
- */
 
 public class HttpTaskServer {
     private static final int PORT = 8080;
@@ -50,6 +42,8 @@ public class HttpTaskServer {
         httpServer.createContext("/tasks", new TaskHandler(manager, gson));
         httpServer.createContext("/subtasks", new SubtaskHandler(manager, gson));
         httpServer.createContext("/epics", new EpicHandler(manager, gson));
+        httpServer.createContext("/history", new HistoryHandler(manager, gson));
+        httpServer.createContext("/prioritized", new PrioritizedHandler(manager, gson));
         httpServer.start();
     }
 }
