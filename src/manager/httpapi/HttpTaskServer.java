@@ -14,6 +14,12 @@ import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
+/*
+@TODO epics
+@TODO history
+@TODO prioritized
+ */
+
 public class HttpTaskServer {
     private static final int PORT = 8080;
     private static HttpServer httpServer;
