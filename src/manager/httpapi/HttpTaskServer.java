@@ -6,6 +6,7 @@ import com.sun.net.httpserver.HttpServer;
 import manager.TaskManager;
 import manager.httpapi.adapter.DurationTypeAdapter;
 import manager.httpapi.adapter.LocalDateTimeTypeAdapter;
+import manager.httpapi.handler.EpicHandler;
 import manager.httpapi.handler.SubtaskHandler;
 import manager.httpapi.handler.TaskHandler;
 
@@ -48,6 +49,7 @@ public class HttpTaskServer {
         httpServer = HttpServer.create(new InetSocketAddress(PORT), 0);
         httpServer.createContext("/tasks", new TaskHandler(manager, gson));
         httpServer.createContext("/subtasks", new SubtaskHandler(manager, gson));
+        httpServer.createContext("/epics", new EpicHandler(manager, gson));
         httpServer.start();
     }
 }
