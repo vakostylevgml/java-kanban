@@ -3,8 +3,7 @@ package manager.httpapi.handler;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
-import manager.inmemory.InMemoryTaskManager;
+import manager.TaskManager;
 import manager.inmemory.OverlapException;
 import model.Task;
 
@@ -15,30 +14,28 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-public class TaskHandler extends BaseHttpHandler implements HttpHandler {
-    public TaskHandler(InMemoryTaskManager taskManager, Gson gson) {
+public class TaskHandler extends BaseHttpHandler {
+    public TaskHandler(TaskManager taskManager, Gson gson) {
         super(taskManager, gson);
     }
 
-    @Override
-    public void handle(HttpExchange exchange) throws IOException, UnsupportedOperationException {
-        String method = exchange.getRequestMethod();
-        switch (method) {
-            case "GET":
-                handleGet(exchange);
-                break;
-            case "POST":
-                handlePost(exchange);
-                break;
-            case "DELETE":
-                handleDelete(exchange);
-            default:
-                throw new UnsupportedOperationException(method + " method not supported");
+    private static Task getTask(Task rawTask) {
+        Duration duration = rawTask.getDuration() != null ? rawTask.getDuration() : null;
+        LocalDateTime start = null;
+        if (duration != null && rawTask.getStartTime().isPresent()) {
+            start = rawTask.getStartTime().get();
         }
-
+        Task task;
+        if (duration != null && start != null) {
+            task = new Task(rawTask.getTitle(), rawTask.getDescription(), rawTask.getStatus(), start, duration);
+        } else {
+            task = new Task(rawTask.getTitle(), rawTask.getDescription(), rawTask.getStatus());
+        }
+        return task;
     }
 
-    private void handleGet(HttpExchange exchange) throws IOException {
+
+    protected void handleGet(HttpExchange exchange) throws IOException {
         String[] pathParts = exchange.getRequestURI().getPath().split("/");
         if (pathParts.length == 2) {
             String tasks = gson.toJson(taskManager.findAllTasks());
@@ -60,7 +57,7 @@ public class TaskHandler extends BaseHttpHandler implements HttpHandler {
         }
     }
 
-    private void handlePost(HttpExchange exchange) throws IOException {
+    protected void handlePost(HttpExchange exchange) throws IOException {
         InputStream inputStream = exchange.getRequestBody();
         String body = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
 
@@ -81,7 +78,7 @@ public class TaskHandler extends BaseHttpHandler implements HttpHandler {
         }
     }
 
-    private void handleDelete(HttpExchange exchange) throws IOException {
+    protected void handleDelete(HttpExchange exchange) throws IOException {
         String[] pathParts = exchange.getRequestURI().getPath().split("/");
         if (pathParts.length == 3) {
             try {
@@ -95,21 +92,6 @@ public class TaskHandler extends BaseHttpHandler implements HttpHandler {
         } else {
             sendError(exchange, "Path not recognized: " + exchange.getRequestURI().getPath());
         }
-    }
-
-    private static Task getTask(Task rawTask) {
-        Duration duration = rawTask.getDuration() != null ? rawTask.getDuration() : null;
-        LocalDateTime start = null;
-        if (duration != null && rawTask.getStartTime().isPresent()) {
-            start = rawTask.getStartTime().get();
-        }
-        Task task;
-        if (duration != null && start != null) {
-            task = new Task(rawTask.getTitle(), rawTask.getDescription(), rawTask.getStatus(), start, duration);
-        } else {
-            task = new Task(rawTask.getTitle(), rawTask.getDescription(), rawTask.getStatus());
-        }
-        return task;
     }
 
 }

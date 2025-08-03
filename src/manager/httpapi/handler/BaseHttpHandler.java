@@ -2,18 +2,37 @@ package manager.httpapi.handler;
 
 import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpExchange;
-import manager.inmemory.InMemoryTaskManager;
+import com.sun.net.httpserver.HttpHandler;
+import manager.TaskManager;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-public abstract class BaseHttpHandler {
-    protected final InMemoryTaskManager taskManager;
+public abstract class BaseHttpHandler implements HttpHandler {
+    protected final TaskManager taskManager;
     protected final Gson gson;
 
-    public BaseHttpHandler(InMemoryTaskManager taskManager, Gson gson) {
+    public BaseHttpHandler(TaskManager taskManager, Gson gson) {
         this.taskManager = taskManager;
         this.gson = gson;
+    }
+
+    @Override
+    public void handle(HttpExchange exchange) throws IOException, UnsupportedOperationException {
+        String method = exchange.getRequestMethod();
+        switch (method) {
+            case "GET":
+                handleGet(exchange);
+                break;
+            case "POST":
+                handlePost(exchange);
+                break;
+            case "DELETE":
+                handleDelete(exchange);
+            default:
+                throw new UnsupportedOperationException(method + " method not supported");
+        }
+
     }
 
     protected void sendText(HttpExchange h, String text) throws IOException {
@@ -49,4 +68,10 @@ public abstract class BaseHttpHandler {
         h.getResponseBody().write(resp);
         h.close();
     }
-} 
+
+    protected abstract void handleGet(HttpExchange exchange) throws IOException;
+
+    protected abstract void handlePost(HttpExchange exchange) throws IOException;
+
+    protected abstract void handleDelete(HttpExchange exchange) throws IOException;
+}

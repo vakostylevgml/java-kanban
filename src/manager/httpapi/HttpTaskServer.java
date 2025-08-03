@@ -3,14 +3,11 @@ package manager.httpapi;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.sun.net.httpserver.HttpServer;
-import manager.Managers;
+import manager.TaskManager;
 import manager.httpapi.adapter.DurationTypeAdapter;
 import manager.httpapi.adapter.LocalDateTimeTypeAdapter;
 import manager.httpapi.handler.SubtaskHandler;
 import manager.httpapi.handler.TaskHandler;
-import manager.inmemory.InMemoryTaskManager;
-import model.Status;
-import model.Task;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -21,9 +18,9 @@ public class HttpTaskServer {
     private static final int PORT = 8080;
     private static HttpServer httpServer;
     private static Gson gson;
-    private final InMemoryTaskManager manager;
+    private final TaskManager manager;
 
-    public HttpTaskServer(InMemoryTaskManager taskManager) {
+    public HttpTaskServer(TaskManager taskManager) {
         manager = taskManager;
         DurationTypeAdapter durationTypeAdapter = new DurationTypeAdapter();
         LocalDateTimeTypeAdapter localDateTimeTypeAdapter = new LocalDateTimeTypeAdapter();
@@ -35,20 +32,6 @@ public class HttpTaskServer {
 
     public static Gson getGson() {
         return gson;
-    }
-
-    public static void main(String[] args) {
-        HttpTaskServer httpTaskServer = new HttpTaskServer(new InMemoryTaskManager(Managers.getDefaultHistory()));
-
-        Task task = new Task("a", "b", Status.NEW);
-        Task task2 = new Task("a2", "b2", Status.IN_PROGRESS);
-        httpTaskServer.manager.createTask(task);
-        httpTaskServer.manager.createTask(task2);
-        try {
-            httpTaskServer.startServer();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     public static void stopServer() {
